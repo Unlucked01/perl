@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-use Data::Dumper;
-
 %hash = ("enter" => "");
 
 while (1) {
@@ -59,7 +57,6 @@ while (1) {
 	        $current = $hash{$current};
 	    }
 
-	    print Dumper(\%hash);
     } elsif ($choice == 4) {
         print "Выход.\n";
         last;
