@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use Data::Dumper;
+
 %hash = ("enter" => "");
 
 while (1) {
@@ -20,10 +22,14 @@ while (1) {
 	        $prev = $current;
 	        $current = $hash{$current};
 	    }
-	    
-	    $hash{$prev} = $new_string;
-	    $hash{$new_string} = $current;
-	    print "Строка '$new_string' добавлена.\n";
+
+	    if ($hash{$prev} eq $new_string) {
+	    	print "Строка '$new_string' уже добавлена.\n"
+	    } else {
+	    	$hash{$prev} = $new_string;
+	    	$hash{$new_string} = $current;
+	    	print "Строка '$new_string' добавлена.\n";
+	    }
 
     } elsif ($choice == 2) {
         print "Введите строку для удаления: ";
@@ -54,7 +60,9 @@ while (1) {
 	    print "Список строк:\n";
 	    while ($current) {
 	        print "$current\n";
+	        $temp = $current;
 	        $current = $hash{$current};
+	        last if $temp eq $current;
 	    }
 
     } elsif ($choice == 4) {
