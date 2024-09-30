@@ -13,15 +13,22 @@ while (1) {
     chomp($choice = <>);
 
     if ($choice == 1) {
-        print "Введите число для добавления: ";
-        chomp($value = <>);
-        insert(\$root, $value);
+        my @values_to_add = ();
+        while(1) {
+            print "Введите число для добавления: ";
+            chomp($value = <>);
+            last if $value eq '';
+            push(@values_to_add, $value);
+        }
+        foreach $v (@values_to_add) {
+            insert(\$root, $v);
+        }
     }
     elsif ($choice == 2) {
         print "Введите число для удаления: ";
         chomp($value = <>);
 
-        if (delete_node($root, $value)){
+        if (delete_node(\$root, $value)) {
             print "Значение $value удалено из дерева.\n";
         } else {
             print "Значение $value не найдено в дереве.\n";
@@ -63,52 +70,53 @@ sub insert {
 }
 
 sub delete_node {
-    my ($node, $value) = @_;
+    my ($node_ref, $value) = @_;
+    my $node = $$node_ref;
 
     return 0 unless $node;
 
     if ($value < $node->{INFO}) {
-        return delete_node($node->{LEFT}, $value);
+        return delete_node(\$node->{LEFT}, $value);
     } elsif ($value > $node->{INFO}) {
-        return delete_node($node->{RIGHT}, $value);
+        return delete_node(\$node->{RIGHT}, $value);
     } else {
         if (!$node->{LEFT} && !$node->{RIGHT}) {
             # Случай 1: Узел — лист
-            $_[0] = undef;
+            $$node_ref = undef;
         } elsif (!$node->{LEFT}) {
             # Случай 2: Узел имеет только правого потомка
-            $_[0] = $node->{RIGHT};
+            $$node_ref = $node->{RIGHT};
         } elsif (!$node->{RIGHT}) {
             # Случай 2: Узел имеет только левого потомка
-            $_[0] = $node->{LEFT};
+            $$node_ref = $node->{LEFT};
         } else {
             # Случай 3: Узел имеет двух потомков
-            # Ищем наименьший элемент в правом поддереве (или можно найти наибольший в левом)
             my $successor = find_min($node->{RIGHT});
             $node->{INFO} = $successor->{INFO};
-            delete_node($node->{RIGHT}, $successor->{INFO});
+            delete_node(\$node->{RIGHT}, $successor->{INFO});
         }
         return 1;
     }
 }
 
-# Поиск минимума в правом поддереве (для удаления)
+# Поиск минимума в поддереве
 sub find_min {
     my ($node) = @_;
     while ($node->{LEFT}) {
         $node = $node->{LEFT};
     }
-    return $node->{INFO};
+    return $node;
 }
 
+# Функция печати дерева с отступами
 sub print_tree {
     my ($node, $depth) = @_;
     return unless $node;
 
-    print_tree($node->{LEFT}, $depth + 1);
+    print_tree($node->{RIGHT}, $depth + 1);
 
     print " " x (4 * $depth);
     print "$node->{INFO}\n";
 
-    print_tree($node->{RIGHT}, $depth + 1);
+    print_tree($node->{LEFT}, $depth + 1);
 }
