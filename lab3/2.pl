@@ -51,7 +51,7 @@ sub insert {
     my $node = $$node_ref;
 
     unless ($node) {
-        $node = {
+        my $node = {
             INFO => $value,
             LEFT  => undef,
             RIGHT => undef
@@ -81,16 +81,15 @@ sub delete_node {
         return delete_node(\$node->{RIGHT}, $value);
     } else {
         if (!$node->{LEFT} && !$node->{RIGHT}) {
-            # Случай 1: Узел — лист
-            $$node_ref = undef;
+            $$node_ref = undef; # Узел — лист
         } elsif (!$node->{LEFT}) {
-            # Случай 2: Узел имеет только правого потомка
+            # Узел имеет только правого потомка
             $$node_ref = $node->{RIGHT};
         } elsif (!$node->{RIGHT}) {
-            # Случай 2: Узел имеет только левого потомка
+            # Узел имеет только левого потомка
             $$node_ref = $node->{LEFT};
         } else {
-            # Случай 3: Узел имеет двух потомков
+            # Узел имеет двух потомков
             my $successor = find_min($node->{RIGHT});
             $node->{INFO} = $successor->{INFO};
             delete_node(\$node->{RIGHT}, $successor->{INFO});

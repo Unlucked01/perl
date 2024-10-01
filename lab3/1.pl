@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-$head = undef;  # Голова списка
+$head = undef;
 
 while (1) {
     print "\nВыберите операцию:\n";
@@ -13,108 +13,77 @@ while (1) {
     chomp($choice = <>);
 
     if ($choice == 1) {
-        print "Введите ФИО: ";
-        chomp($name = <>);
-
         print "Введите номер зачетной книжки: ";
         chomp($id = <>);
-
-        print "Введите номер группы: ";
-        chomp($group = <>);
-
+        print "Введите ФИО: ";
+        chomp ($fio = <>);
+        print "Введите название группы: ";
+        chomp ($group = <>);
         print "Введите специальность: ";
-        chomp($specialty = <>);
-
+        chomp ($spec = <>);
         print "Введите год рождения: ";
-        chomp($birth_year = <>);
+        chomp ($birth = <>);
 
-        %student = (
-            name       => $name,
+        my %student = (
             id         => $id,
+            fio       => $fio,
             group      => $group,
-            specialty  => $specialty,
-            birth_year => $birth_year
+            speciality  => $spec,
+            birth_year => $birth
         );
 
-        insert(\$head, \%student);
-    }
-    elsif ($choice == 2) {
-        print "Введите номер зачетной книжки студента, которого нужно удалить: ";
-        chomp($id = <>);
-        delete_student(\$head, $id);
-    }
-    elsif ($choice == 3) {
-    	print "Список студентов:\n\n";
-        list_print($head);
-    }
-    elsif ($choice == 4) {
+        $head = append($head, \%student);
+        
+        print "Добавление выполнено.\n";
+
+    } elsif ($choice == 2) {
+        print "Введите значение для удаления: ";
+        chomp ($value = <>);
+
+        $head = my_delete($head, $value);
+        
+    } elsif ($choice == 3) {
+        print_list($head);
+    } elsif ($choice == 4) {
+        print "Выход\n";
         last;
     } else {
-        print "Неверный выбор!\n";
+        print "Такой опции не существует\n";
     }
 }
 
-sub insert {
-    ($item_ref, $student_ref) = @_;
-    $item = $$item_ref;
+sub append {
+    my ($head, $new_node) = @_;
 
-    unless ($item) {
-        $item = {
-            INFO => $student_ref,
-            NEXT => undef
-        };
-        $$item_ref = $item;
-        return;
+    if (!$head || $new_node->{id} <= $head->{id}) {
+        $new_node->{next} = $head;
+        return $new_node;
     }
 
-    if ($item->{INFO}->{id} eq $student_ref->{id}) {
-        warn "Студент с таким номером зачетной книжки уже существует!\n";
-        return;
-    }
-
-    # Если текущий элемент имеет больший ключ, вставляем перед ним
-    if ($item->{INFO}->{id} gt $student_ref->{id}) {
-        $new_item = {
-            INFO => $student_ref,
-            NEXT => $item
-        };
-        $$item_ref = $new_item;
-        return;
-    }
-
-    # Иначе продолжаем искать место для вставки
-    insert(\$item->{NEXT}, $student_ref);
+    $head->{next} = append($head->{next}, $new_node);
+    return $head;
 }
 
-# Удаление студента из списка по номеру зачетной книжки
-sub delete_student {
-    ($item_ref, $id) = @_;
-    $item = $$item_ref;
-
-    unless ($item) {
-        print "Студент с таким номером зачетной книжки не найден!\n";
-        return;
+sub my_delete {
+    my ($head, $value) = @_;
+    if (!$head) {
+        return $head;
     }
-
-    if ($item->{INFO}->{id} eq $id) {
-        $$item_ref = $item->{NEXT};  # Перемещаем указатель на следующий элемент
-        print "Студент с номером зачетной книжки $id удален.\n";
-        return;
+    if ($head->{id} == $value) {
+        return $head->{next};
     }
-
-    delete_student(\$item->{NEXT}, $id);
+    $head->{next} = my_delete($head->{next}, $value);
+    return $head;
 }
 
-# Печать списка студентов
-sub list_print {
-    ($item) = @_;
-    unless ($item) {
+sub print_list {
+    my ($head) = @_;
+    if (!$head) {
         return;
     }
 
-    $info = $item->{INFO};
-    print "ФИО: $info->{name},\nНомер зачетной книжки: $info->{id},\nГруппа: $info->{group},\nСпециальность: $info->{specialty},\nГод рождения: $info->{birth_year}\n";
-    list_print($item->{NEXT});
+    print "Номер зачетной книжки: $head->{id}\nФИО: $head->{fio}\nГруппа: $head->{group}\nСпециальность: $head->{speciality}\nГод рождения: $head->{birth_year}\n\n";
+    print_list($head->{next});
 }
 
 
