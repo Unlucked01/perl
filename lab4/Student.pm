@@ -9,7 +9,7 @@ sub new {
         speciality => $speciality,
         birth_year => $birth_year,
         grades     => \@grades,  # Массив оценок
-        next       => undef      # Ссылка на следующий элемент списка
+        next       => undef
     };
     bless $self, $class;
     return $self;
@@ -33,11 +33,11 @@ sub compare {
     my ($student1, $student2) = @_;
     my $avg1 = $student1->get_average;
     my $avg2 = $student2->get_average;
-    
+
     if ($avg1 > $avg2) {
         return "$student1->{fio} (с баллом $avg1) учится лучше, чем $student2->{fio} (с баллом $avg2).\n";
     } elsif ($avg1 < $avg2) {
-        return "$student2->{fio} (с баллом $avg1) учится лучше, чем $student1->{fio} (с баллом $avg2).\n";
+        return "$student2->{fio} (с баллом $avg2) учится лучше, чем $student1->{fio} (с баллом $avg1).\n";
     } else {
         return "$student1->{fio} (с баллом $avg1) и $student2->{fio} (с баллом $avg2) учатся одинаково хорошо.\n";
     }
