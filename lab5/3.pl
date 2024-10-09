@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-use strict;
-use warnings;
 
 my ($dir, $ext) = @ARGV;
 
@@ -19,15 +17,13 @@ sub delete_files_with_extension {
     chdir($current_dir) or die "Не могу перейти в каталог $current_dir: $!";
 
     opendir(DIR, ".") or die "Не могу открыть каталог $current_dir: $!";
-    my @files = readdir(DIR);   # Читаем содержимое каталога
+    my @files = readdir(DIR);
     closedir(DIR);
 
-    # Проходим по каждому файлу/каталогу
     foreach my $file (@files) {
         next if ($file eq '.' or $file eq '..' or $file eq '.git');  # Пропускаем спецкаталоги
 
         if (-d $file) {
-            # Если это каталог, рекурсивно обходим его
             delete_files_with_extension("$current_dir/$file");
         } elsif (-f $file) {
             my $extention = ( split /\./, $file )[-1];

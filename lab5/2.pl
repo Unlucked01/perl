@@ -1,12 +1,9 @@
 #!/usr/bin/perl
-use strict;
-use warnings;
 
 # ./2.pl /Users/unlucked/7sem/perl/
 
 my ($dir, $output_option) = @ARGV;
 
-# Если аргумент не указан, используем текущий каталог и вывод на экран
 $dir = "." unless defined $dir;
 $output_option = "output" unless defined $output_option;
 
@@ -23,11 +20,9 @@ sub print_tree {
     my @files = readdir(DIR);
     closedir(DIR);
 
-    # Проходим по каждому файлу/каталогу
     foreach my $file (@files) {
-        next if ($file eq '.' or $file eq '..' or $file eq '.git');  # Пропускаем спецкаталоги
+        next if ($file eq '.' or $file eq '..' or $file eq '.git');
 
-        # Проверяем, является ли это каталогом или файлом
         if (-d $file) {
             my $output = "$indent Каталог: $file/\n";
             
@@ -37,7 +32,6 @@ sub print_tree {
                 print $output;
             }
 
-            # Рекурсивно обходим этот каталог
             print_tree("$current_dir/$file", "$indent    ");
         } elsif (-f $file) {
             my $size = -s $file;

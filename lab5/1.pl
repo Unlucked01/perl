@@ -30,8 +30,8 @@ sub hanoi {
 sub move_disk {
     my ($from, $to) = @_;
 
-    my $disk = eval "\@$from";  # Получаем последний диск с стержня $from
-    eval "push \@$to, pop \@$from"; # Перемещаем диск со стержня $from на стержень $to
+    my $disk = eval "\@$from";
+    eval "push \@$to, pop \@$from";
     print $fh "Перенос диска диаметра $disk со стержня $from на стержень $to.\n";
 }
 

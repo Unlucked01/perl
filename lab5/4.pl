@@ -1,6 +1,4 @@
 #!/usr/bin/perl
-use strict;
-use warnings;
 
 print "Введите исходный каталог для перемещения: ";
 chomp(my $src_dir = <>);
@@ -19,7 +17,6 @@ sub move_directory {
     my @files = readdir(DIR);
     closedir(DIR);
 
-    # Проходим по каждому файлу/каталогу
     foreach my $file (@files) {
         next if ($file eq '.' or $file eq '..' or $file eq '.git');  # Пропускаем спецкаталоги
 
@@ -27,11 +24,9 @@ sub move_directory {
         my $dst_path = "$dst/$file";
 
         if (-d $src_path) {
-            # Если это каталог, рекурсивно перемещаем его
             print "Перемещаем каталог: $src_path -> $dst_path\n";
             move_directory($src_path, $dst_path);
         } else {
-            # Это файл, перемещаем его с помощью rename
             print "Перемещаем файл: $src_path -> $dst_path\n";
             rename($src_path, $dst_path) or die "Не могу переместить файл $src_path: $!";
         }
