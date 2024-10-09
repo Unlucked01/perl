@@ -31,9 +31,9 @@ while (1) {
         chomp(my $grades_input = <>);
         my @grades = split(' ', $grades_input);  # Разделяем оценки
         my $student = Student->new($id, $fio, $group, $spec, $birth, @grades);
-        
+
         $head = $head ? $head->append($student) : $student;
-        print Dumper(\$head);
+        
         print "Добавление выполнено.\n";
 
     } elsif ($choice == 2) {
