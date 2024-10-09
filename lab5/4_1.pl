@@ -13,7 +13,9 @@ sub create_test_files {
     for my $i (1..$num_files) {
         my $file_path = "$dir/$i.$ext";
         open(my $fh, '>', $file_path) or die "Не могу создать файл $file_path: $!";
-        print $fh "Это тестовый файл $i в папке $dir\n";
+        for my $j (1..10000) {
+            print $fh "Это тестовый файл $i в папке $dir\n";
+        }
         close($fh);
         print "Создан файл: $file_path\n";
     }

@@ -1,24 +1,16 @@
 #!/usr/bin/perl
 
-print "Введите исходный каталог для перемещения: ";
-chomp(my $src_dir = <>);
-
-print "Введите каталог назначения: ";
-chomp(my $dst_dir = <>);
-
-sub move_directory {
+sub move_dir {
     my ($src, $dst) = @_;
-    if (!-d $dst) {
-        mkdir($dst) or die "Не могу создать каталог $dst: $!";
-        print "Создан каталог: $dst\n";
-    }
 
-    opendir(DIR, $src) or die "Не могу открыть каталог $src: $!";
-    my @files = readdir(DIR);
-    closedir(DIR);
+    mkdir($dst) unless -d $dst;
+
+    opendir(my $dh, $src) or die "Не удалось открыть директорию $src: $!";
+    my @files = readdir($dh);
+    closedir($dh);
 
     foreach my $file (@files) {
-        next if ($file eq '.' or $file eq '..' or $file eq '.git');  # Пропускаем спецкаталоги
+        next if ($file eq '.' or $file eq '..' or $file eq '.git');
 
         my $src_path = "$src/$file";
         my $dst_path = "$dst/$file";
@@ -28,22 +20,35 @@ sub move_directory {
             move_directory($src_path, $dst_path);
         } else {
             print "Перемещаем файл: $src_path -> $dst_path\n";
-            rename($src_path, $dst_path) or die "Не могу переместить файл $src_path: $!";
+            copy_and_remove_file($src_path, $dst_path);
         }
     }
+    
 
-    rmdir($src) or warn "Не могу удалить каталог $src: $!";
-    print "Удалён каталог: $src\n";
+    rmdir($src) or warn "Не удалось удалить каталог $src: $!\n";
 }
 
-if (-d $src_dir) {
-    if (!-d $dst_dir) {
-        mkdir($dst_dir) or die "Не могу создать целевой каталог $dst_dir: $!";
-        print "Целевой каталог $dst_dir создан\n";
+sub copy_and_remove_file {
+    my ($src, $dst) = @_;
+    open(my $src_fh, '<', $src) or die "Не могу открыть файл $src для чтения: $!";
+    open(my $dst_fh, '>', $dst) or die "Не могу открыть файл $dst для записи: $!";
+    
+    while (my $line = <$src_fh>) {
+        print $dst_fh $line;
     }
 
-    move_directory($src_dir, $dst_dir);
-    print "Каталог $src_dir перемещён в $dst_dir\n";
-} else {
-    die "Исходный каталог $src_dir не существует.\n";
+    close($src_fh);
+    close($dst_fh);
+
+    unlink($src) or warn "Не могу удалить файл $src: $!";
 }
+
+print "Введите исходный каталог: ";
+my $src_dir = <>;
+chomp $src_dir;
+
+print "Введите целевой каталог: ";
+my $dest_dir = <>;
+chomp $dest_dir;
+
+move_dir($src_dir, $dest_dir);
