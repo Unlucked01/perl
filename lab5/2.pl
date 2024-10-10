@@ -38,11 +38,16 @@ sub print_tree {
             my $is_readable = (-r $file) ? 'Чтение: да' : 'Чтение: нет';
             my $is_writable = (-w $file) ? 'Запись: да' : 'Запись: нет';
             
-            my $output = sprintf(
-                "$indent Файл: %s (Размер: %d байт, %s, %s)\n",
-                $file, $size, $is_readable, $is_writable
-            );
-            
+            my @stats = stat($file);
+            my $mtime = $stats[9];
+
+            my ($sec, $min, $hour, $day, $month, $year) = localtime($mtime);
+            $year += 1900;
+            $month += 1;
+            my $date = sprintf("%02d-%02d-%04d %02d:%02d:%02d", $day, $month, $year, $hour, $min, $sec);
+
+            my $output = "$indent Файл: $file (Размер $size байт, $is_readable, $is_writable, $is_executable, Последняя модификация: $date)\n";
+
             if ($output_option eq 'file') {
                 print $fh $output;
             } else {
