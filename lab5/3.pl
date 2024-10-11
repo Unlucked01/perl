@@ -21,7 +21,7 @@ sub delete_files_with_extension {
     closedir(DIR);
 
     foreach my $file (@files) {
-        next if ($file eq '.' or $file eq '..' or $file eq '.git');  # Пропускаем спецкаталоги
+        next if ($file eq '.' or $file eq '..' or $file eq '.git');
 
         if (-d $file) {
             delete_files_with_extension("$current_dir/$file");

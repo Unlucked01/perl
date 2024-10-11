@@ -37,6 +37,7 @@ sub print_tree {
             my $size = -s $file;
             my $is_readable = (-r $file) ? 'Чтение: да' : 'Чтение: нет';
             my $is_writable = (-w $file) ? 'Запись: да' : 'Запись: нет';
+            my $is_executable = (-x $file) ? 'Исполнение: да' : 'Исполнение: нет';
             
             my @stats = stat($file);
             my $mtime = $stats[9];
@@ -44,9 +45,9 @@ sub print_tree {
             my ($sec, $min, $hour, $day, $month, $year) = localtime($mtime);
             $year += 1900;
             $month += 1;
-            my $date = sprintf("%02d-%02d-%04d %02d:%02d:%02d", $day, $month, $year, $hour, $min, $sec);
+            my $file_info = sprintf("%02d-%02d-%04d %02d:%02d:%02d", $day, $month, $year, $hour, $min, $sec);
 
-            my $output = "$indent Файл: $file (Размер $size байт, $is_readable, $is_writable, $is_executable, Последняя модификация: $date)\n";
+            my $output = "$indent Файл: $file (Размер $size байт, $is_readable, $is_writable, $is_executable, Последняя модификация: $file_info)\n";
 
             if ($output_option eq 'file') {
                 print $fh $output;

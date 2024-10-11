@@ -30,7 +30,6 @@ sub move_dir {
 
 sub copy_and_remove_file {
     my ($src, $dst) = @_;
-    mkdir("$dst/$src") unless -d "$dst/$src";
     open(my $src_fh, '<', $src) or die "Не могу открыть файл $src для чтения: $!";
     open(my $dst_fh, '>', $dst) or die "Не могу открыть файл $dst для записи: $!";
     
