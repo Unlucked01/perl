@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Translation Form</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+    let typingTimer;
+    let isEnglishToRussian = true;
+
+    function switchLanguages() {
+        isEnglishToRussian = !isEnglishToRussian;
+        const sourceLabel = document.getElementById('source_label');
+        const targetLabel = document.getElementById('target_label');
+        const sourcePlaceholder = document.getElementById('source_text');
+        const targetPlaceholder = document.getElementById('translated_text');
+        const title = document.querySelector('h2');
+
+        if (isEnglishToRussian) {
+            sourceLabel.textContent = 'English Text:';
+            targetLabel.textContent = 'Russian Translation:';
+            sourcePlaceholder.placeholder = 'Type English text here...';
+            targetPlaceholder.placeholder = 'Translation will appear here...';
+            title.textContent = 'English to Russian Translator';
+        } else {
+            sourceLabel.textContent = 'Russian Text:';
+            targetLabel.textContent = 'English Translation:';
+            sourcePlaceholder.placeholder = 'Введите русский текст...';
+            targetPlaceholder.placeholder = 'Translation will appear here...';
+            title.textContent = 'Russian to English Translator';
+        }
+
+        // Clear both text areas
+        document.getElementById('source_text').value = '';
+        document.getElementById('translated_text').value = '';
+    }
+
+    function updateTranslation() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(function() {
+            var sourceText = document.getElementById('source_text').value;
+            if (sourceText.trim() === '') return;
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/cgi-bin/translate.pl', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    document.getElementById('translated_text').value = xhr.responseText;
+                }
+            };
+            xhr.send('text=' + encodeURIComponent(sourceText) + '&direction=' + 
+                    (isEnglishToRussian ? 'en2ru' : 'ru2en'));
+        }, 500);
+    }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>English to Russian Translator</h2>
+        <button onclick="switchLanguages()" class="btn switch-btn">
+            Switch Languages 🔄
+        </button>
+        <div class="translation-container">
+            <div class="form-group source-form">
+                <label id="source_label" for="source_text">English Text:</label>
+                <textarea id="source_text" name="text" rows="4" 
+                    onkeyup="updateTranslation()" 
+                    placeholder="Type English text here..."></textarea>
+            </div>
+            
+            <div class="form-group target-form">
+                <label id="target_label" for="translated_text">Russian Translation:</label>
+                <textarea id="translated_text" rows="5" readonly 
+                    placeholder="Translation will appear here..."></textarea>
+            </div>
+        </div>
+        
+        <button onclick="window.location.href='/dict_manage.html'" class="btn">Manage Dictionary</button>
+        <button onclick="window.location.href='/cgi-bin/history.pl'" class="btn">View History</button>
+    </div>
+</body>
+</html> 
