@@ -1,82 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Translation Form</title>
     <link rel="stylesheet" href="css/style.css">
-    <script>
-    let typingTimer;
-    let isEnglishToRussian = true;
-
-    function switchLanguages() {
-        isEnglishToRussian = !isEnglishToRussian;
-        const sourceLabel = document.getElementById('source_label');
-        const targetLabel = document.getElementById('target_label');
-        const sourcePlaceholder = document.getElementById('source_text');
-        const targetPlaceholder = document.getElementById('translated_text');
-        const title = document.querySelector('h2');
-
-        if (isEnglishToRussian) {
-            sourceLabel.textContent = 'English Text:';
-            targetLabel.textContent = 'Russian Translation:';
-            sourcePlaceholder.placeholder = 'Type English text here...';
-            targetPlaceholder.placeholder = 'Translation will appear here...';
-            title.textContent = 'English to Russian Translator';
-        } else {
-            sourceLabel.textContent = 'Russian Text:';
-            targetLabel.textContent = 'English Translation:';
-            sourcePlaceholder.placeholder = 'Введите русский текст...';
-            targetPlaceholder.placeholder = 'Translation will appear here...';
-            title.textContent = 'Russian to English Translator';
-        }
-
-        // Clear both text areas
-        document.getElementById('source_text').value = '';
-        document.getElementById('translated_text').value = '';
-    }
-
-    function updateTranslation() {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(function() {
-            var sourceText = document.getElementById('source_text').value;
-            if (sourceText.trim() === '') return;
-            
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/cgi-bin/translate.pl', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    document.getElementById('translated_text').value = xhr.responseText;
-                }
-            };
-            xhr.send('text=' + encodeURIComponent(sourceText) + '&direction=' + 
-                    (isEnglishToRussian ? 'en2ru' : 'ru2en'));
-        }, 500);
-    }
-    </script>
+    <script src="js/translator.js" defer></script>
 </head>
 <body>
     <div class="container">
         <h2>English to Russian Translator</h2>
-        <button onclick="switchLanguages()" class="btn switch-btn">
-            Switch Languages 🔄
-        </button>
-        <div class="translation-container">
+         
+        <div class="translation-container"> 
             <div class="form-group source-form">
                 <label id="source_label" for="source_text">English Text:</label>
-                <textarea id="source_text" name="text" rows="4" 
-                    onkeyup="updateTranslation()" 
-                    placeholder="Type English text here..."></textarea>
+                <textarea id="source_text" name="text" rows="5" placeholder="Type English text here..." style="gap: 10px;"></textarea>
             </div>
+
+            <button id="switch-btn" style="margin-bottom: 50px; margin-top: 50px; position: relative; left: 10px; border: none; background: transparent;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>
+            </button>
             
             <div class="form-group target-form">
                 <label id="target_label" for="translated_text">Russian Translation:</label>
-                <textarea id="translated_text" rows="5" readonly 
-                    placeholder="Translation will appear here..."></textarea>
+                <textarea id="translated_text" rows="5" readonly placeholder="Translation will appear here..."></textarea>
             </div>
         </div>
         
-        <button onclick="window.location.href='/dict_manage.html'" class="btn">Manage Dictionary</button>
-        <button onclick="window.location.href='/cgi-bin/history.pl'" class="btn">View History</button>
+        <div>
+            <button onclick="window.location.href='/dict_manage.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
+            </button>
+            <button onclick="window.location.href='/cgi-bin/history.pl'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </button>
+        </div>
     </div>
 </body>
 </html> 

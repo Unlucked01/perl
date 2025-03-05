@@ -1,54 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dictionary Management</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/dict_manager.js" defer></script>
 </head>
 <body>
     <div class="container">
         <h2>Dictionary Management</h2>
         
-        <h3>Add/Edit Word</h3>
-        <form action="/cgi-bin/dict_manage.pl" method="POST">
-            <input type="hidden" name="action" value="add">
-            <div class="form-group">
-                <label>English Word:</label>
-                <input type="text" name="eng_word" required>
+        <div id="success-message" class="success-message"></div>
+        
+        <div class="top-controls">
+            <div class="search-section">
+                <h3>Search Dictionary</h3>
+                <div class="search-box">
+                    <input type="text" id="dictionary-search" placeholder="Search dictionary..." oninput="handleSearch()" style="display: flex; flex-direction: row; gap: 10px;">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Russian Translation:</label>
-                <input type="text" name="rus_word" required>
+        </div>
+        
+        <div class="card dictionary-card" style="margin-top: 20px;">
+            <div id="dictionary-content" class="dictionary-table-container">
+                Loading dictionary...
             </div>
-            <button type="submit" class="btn">Add/Update Word</button>
-        </form>
-
-        <h3>Delete Word</h3>
-        <form action="/cgi-bin/dict_manage.pl" method="POST">
-            <input type="hidden" name="action" value="delete">
-            <div class="form-group">
-                <label>English Word:</label>
-                <input type="text" name="eng_word" required>
-            </div>
-            <button type="submit" class="btn">Delete Word</button>
-        </form>
-
-        <div id="dictionary-content">
-            Loading dictionary...
         </div>
 
-        <p>
-            <button onclick="window.location.href='/translate.html'" class="btn">Back to Translator</button>
-            <button onclick="window.location.href='/cgi-bin/history.pl'" class="btn">View History</button>
-        </p>
+        <div class="form-section">
+            <h3>Add/Edit Word</h3>
+            <form id="add-form">
+                <input type="hidden" name="action" value="add">
+                <div class="form-group" style="display: flex; flex-direction: row; gap: 10px;">
+                    <label>English Word:</label>
+                    <input type="text" name="eng_word" required >
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: row; gap: 10px;">
+                    <label>Russian Translation:</label>
+                    <input type="text" name="rus_word" required>
+                </div>
+                <button type="submit" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add/Update Word
+                </button>
+            </form>
+        </div>
+        
+        <div class="navigation-buttons" style="margin-top: 20px;">
+            <button onclick="window.location.href='/translate.html'" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6M12 5l-7 7 7 7"></path></svg>
+                Back to Translator
+            </button>
+            <button onclick="window.location.href='/cgi-bin/history.pl'" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                View History
+            </button>
+        </div>
     </div>
-
-    <script>
-    // Load dictionary content when page loads
-    fetch('/cgi-bin/dict_manage.pl')
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('dictionary-content').innerHTML = html;
-        });
-    </script>
 </body>
 </html> 

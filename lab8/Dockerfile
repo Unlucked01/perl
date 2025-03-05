@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y \
     perl \
     libdb-dev \
     libdb-file-lock-perl \
+    libcgi-pm-perl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./httpd.conf /usr/local/apache2/conf/httpd.conf
