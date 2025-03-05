@@ -21,7 +21,6 @@ if (open(my $fh, '<:utf8', 'translations.txt')) {
     close $fh;
 }
 
-# Generate HTML
 print qq{
 <!DOCTYPE html>
 <html>

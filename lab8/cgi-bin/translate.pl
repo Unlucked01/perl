@@ -7,20 +7,14 @@ use POSIX qw(strftime);
 use Encode qw(decode encode);
 use CGI qw(:standard);
 
-# Set output to UTF-8
 binmode(STDOUT, ":utf8");
 print "Content-type: text/plain; charset=utf-8\n\n";
 
-# Use CGI to parse the input
 my $q = CGI->new;
 my $text = $q->param('text');
 my $direction = $q->param('direction') || 'en2ru';
 
-# Make sure text is properly decoded
 $text = decode('UTF-8', $text) unless Encode::is_utf8($text);
-
-# Debug output
-print STDERR "Input: '$text', Direction: '$direction'\n";
 
 my %dictionary;
 tie %dictionary, 'DB_File', 'dictionary.db', O_RDONLY, 0666, $DB_HASH
@@ -28,7 +22,6 @@ tie %dictionary, 'DB_File', 'dictionary.db', O_RDONLY, 0666, $DB_HASH
 
 my %reverse_dictionary;
 while (my ($eng, $rus) = each %dictionary) {
-    # Decode for reverse lookup
     my $decoded_rus = $rus;
     $decoded_rus = decode('UTF-8', $decoded_rus) unless Encode::is_utf8($decoded_rus);
     $reverse_dictionary{$decoded_rus} = $eng;
@@ -40,7 +33,6 @@ my $all_words_translated = 1;
 
 foreach my $word (@words) {
     if ($direction eq 'en2ru' && exists $dictionary{$word}) {
-        # Decode for display
         my $translation = $dictionary{$word};
         $translation = decode('UTF-8', $translation) unless Encode::is_utf8($translation);
         push @translated_words, $translation;

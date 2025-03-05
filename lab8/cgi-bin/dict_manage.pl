@@ -87,7 +87,6 @@ HTML
 
 print "</table>\n";
 
-# Add a count of entries
 my $count = scalar @filtered_keys;
 my $total = scalar keys %dictionary;
 if ($search_term && $count != $total) {
