@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Система проверки правописания</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            min-height: 100vh;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .menu {
+            margin: 20px 0;
+            padding: 0;
+            list-style: none;
+        }
+        .menu li {
+            margin-bottom: 10px;
+        }
+        .menu a {
+            display: block;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .menu a:hover {
+            background-color: #45a049;
+        }
+        .description {
+            line-height: 1.6;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Система проверки правописания</h1>
+        
+        <div class="description">
+            <p>Добро пожаловать в систему проверки правописания на Perl!</p>
+            <p>Эта система позволяет проверять орфографию в текстовых документах, предлагает исправления для слов с ошибками и обучается новым словам.</p>
+        </div>
+        
+        <ul class="menu">
+            <li><a href="/cgi-bin/spellcheck.pl">Проверка правописания</a></li>
+            <li><a href="/cgi-bin/dict_view.pl">Управление словарем</a></li>
+        </ul>
+        
+        <div class="description">
+            <h2>Возможности системы:</h2>
+            <ul>
+                <li>Проверка орфографии в текстовых документах</li>
+                <li>Интерактивное исправление ошибок</li>
+                <li>Загрузка файлов для проверки</li>
+                <li>Управление словарем (добавление, удаление, редактирование слов)</li>
+                <li>Обучение системы новым словам</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 
