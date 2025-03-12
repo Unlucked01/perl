@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Научный журнал - Главная</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .hero {
+            background-image: url('/images/hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+        
+        .latest-issues {
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">
+                <a href="/">Научный журнал</a>
+            </div>
+            <nav class="nav">
+                <a href="/" class="active">Главная</a>
+                <a href="/cgi-bin/issues.pl">Выпуски</a>
+                <a href="/about.html">О журнале</a>
+                <a href="/cgi-bin/cart.pl">Корзина <span id="cart-counter" style="display: none;">0</span></a>
+                <a href="/cgi-bin/auth.pl">Вход</a>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="container hero-content">
+            <h1 class="hero-title">Научный журнал</h1>
+            <p class="hero-subtitle">Публикация передовых научных исследований и статей в различных областях науки</p>
+            <a href="/cgi-bin/issues.pl" class="btn">Просмотреть выпуски</a>
+        </div>
+    </section>
+    
+    <main class="main">
+        <div class="container">
+            <section class="features">
+                <div class="feature">
+                    <div class="feature-icon">📚</div>
+                    <h3>Электронные выпуски</h3>
+                    <p>Доступ к полным текстам научных статей в электронном формате</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Поиск по тематике</h3>
+                    <p>Удобный поиск статей по ключевым словам и тематическим разделам</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✍️</div>
+                    <h3>Публикация статей</h3>
+                    <p>Возможность подачи собственных научных работ для публикации</p>
+                </div>
+            </section>
+            
+            <section class="latest-issues">
+                <h2 class="text-center mb-3">Последние выпуски</h2>
+                <div class="issues-grid">
+                    <!-- Здесь будут отображаться последние выпуски -->
+                    <div class="issue-card">
+                        <img src="/images/issue-cover-placeholder.jpg" alt="Обложка выпуска" class="issue-cover">
+                        <div class="issue-info">
+                            <h3 class="issue-title">Выпуск №1, 2023</h3>
+                            <div class="issue-date">Январь 2023</div>
+                            <p class="issue-description">Специальный выпуск, посвященный современным исследованиям в области информационных технологий.</p>
+                            <a href="/cgi-bin/issues.pl?id=1" class="btn">Подробнее</a>
+                        </div>
+                    </div>
+                    <div class="issue-card">
+                        <img src="/images/issue-cover-placeholder.jpg" alt="Обложка выпуска" class="issue-cover">
+                        <div class="issue-info">
+                            <h3 class="issue-title">Выпуск №2, 2023</h3>
+                            <div class="issue-date">Апрель 2023</div>
+                            <p class="issue-description">В этом выпуске представлены статьи по различным направлениям научных исследований.</p>
+                            <a href="/cgi-bin/issues.pl?id=2" class="btn">Подробнее</a>
+                        </div>
+                    </div>
+                    <div class="issue-card">
+                        <img src="/images/issue-cover-placeholder.jpg" alt="Обложка выпуска" class="issue-cover">
+                        <div class="issue-info">
+                            <h3 class="issue-title">Выпуск №3, 2023</h3>
+                            <div class="issue-date">Июль 2023</div>
+                            <p class="issue-description">Тематический выпуск по проблемам экологии и устойчивого развития.</p>
+                            <a href="/cgi-bin/issues.pl?id=3" class="btn">Подробнее</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h3 class="footer-title">О журнале</h3>
+                <p>Научный журнал публикует оригинальные исследования в различных областях науки.</p>
+            </div>
+            <div class="footer-section">
+                <h3 class="footer-title">Контакты</h3>
+                <p>Email: info@scientific-journal.com</p>
+                <p>Телефон: +7 (123) 456-78-90</p>
+            </div>
+            <div class="footer-section">
+                <h3 class="footer-title">Ссылки</h3>
+                <p><a href="/about.html">О журнале</a></p>
+                <p><a href="/cgi-bin/issues.pl">Архив выпусков</a></p>
+                <p><a href="/cgi-bin/auth.pl?action=register">Регистрация</a></p>
+            </div>
+        </div>
+        <div class="container text-center mt-3">
+            <p>&copy; 2025 Научный журнал. Все права защищены.</p>
+        </div>
+    </footer>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html> 

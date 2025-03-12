@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О журнале - Научный журнал</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .about-section {
+            margin-bottom: 2rem;
+        }
+        
+        .about-image {
+            max-width: 30%;
+            height: auto;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .team-member {
+            text-align: center;
+        }
+        
+        .team-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+        
+        .team-name {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .team-position {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+        
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background-color: var(--secondary-color);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+        }
+        
+        .timeline-item {
+            padding: 10px 40px;
+            position: relative;
+            width: 50%;
+            box-sizing: border-box;
+        }
+        
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -12px;
+            background-color: white;
+            border: 4px solid var(--secondary-color);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .timeline-left {
+            left: 0;
+        }
+        
+        .timeline-right {
+            left: 50%;
+        }
+        
+        .timeline-right::after {
+            left: -12px;
+        }
+        
+        .timeline-content {
+            padding: 20px;
+            background-color: white;
+            position: relative;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timeline-year {
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 31px;
+            }
+            
+            .timeline-item {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+            
+            .timeline-item::after {
+                left: 19px;
+            }
+            
+            .timeline-right {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">
+                <a href="/">Научный журнал</a>
+            </div>
+            <nav class="nav">
+                <a href="/">Главная</a>
+                <a href="/cgi-bin/issues.pl">Выпуски</a>
+                <a href="/about.html" class="active">О журнале</a>
+                <a href="/cgi-bin/cart.pl">Корзина <span id="cart-counter" style="display: none;">0</span></a>
+                <a href="/cgi-bin/auth.pl">Вход</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main">
+        <div class="container">
+            <h1 class="mb-4">О журнале</h1>
+            
+            <div class="card about-section">
+                <h2>История журнала</h2>
+                <p>Научный журнал был основан в 2010 году группой ученых с целью создания платформы для публикации и распространения научных исследований в различных областях науки. За годы своего существования журнал стал одним из ведущих научных изданий в своей области.</p>
+                <img src="/images/about-history.jpg" alt="История журнала" class="about-image">
+            </div>
+            
+            <div class="card about-section">
+                <h2>Миссия и цели</h2>
+                <p>Миссия нашего журнала — способствовать развитию науки путем публикации качественных научных работ и обеспечения доступа к ним широкой аудитории.</p>
+                <p>Основные цели журнала:</p>
+                <ul>
+                    <li>Публикация оригинальных научных исследований</li>
+                    <li>Содействие обмену научными знаниями</li>
+                    <li>Поддержка молодых ученых</li>
+                    <li>Повышение качества научных публикаций</li>
+                </ul>
+            </div>
+            
+            <div class="card about-section">
+                <h2>Тематические направления</h2>
+                <p>Журнал публикует статьи по следующим научным направлениям:</p>
+                <ul>
+                    <li>Информационные технологии и компьютерные науки</li>
+                    <li>Физика и математика</li>
+                    <li>Биология и медицина</li>
+                    <li>Экология и науки о Земле</li>
+                    <li>Экономика и управление</li>
+                    <li>Социальные и гуманитарные науки</li>
+                </ul>
+            </div>
+            
+            <div class="card about-section">
+                <h2>Редакционная коллегия</h2>
+                <p>В состав редакционной коллегии входят ведущие ученые и специалисты в различных областях науки.</p>
+                
+                <div class="team-grid">
+                    <div class="team-member">
+                        <img src="/images/team-placeholder.jpg" alt="Фото" class="team-photo">
+                        <div class="team-name">Иванов Иван Иванович</div>
+                        <div class="team-position">Главный редактор</div>
+                    </div>
+                    <div class="team-member">
+                        <img src="/images/team-placeholder.jpg" alt="Фото" class="team-photo">
+                        <div class="team-name">Петров Петр Петрович</div>
+                        <div class="team-position">Заместитель главного редактора</div>
+                    </div>
+                    <div class="team-member">
+                        <img src="/images/team-placeholder.jpg" alt="Фото" class="team-photo">
+                        <div class="team-name">Сидорова Анна Сергеевна</div>
+                        <div class="team-position">Научный редактор</div>
+                    </div>
+                    <div class="team-member">
+                        <img src="/images/team-placeholder.jpg" alt="Фото" class="team-photo">
+                        <div class="team-name">Викторов Виктор Викторович</div>
+                        <div class="team-position">Технический редактор</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card about-section">
+                <h2>История развития</h2>
+                
+                <div class="timeline">
+                    <div class="timeline-item timeline-left">
+                        <div class="timeline-content">
+                            <div class="timeline-year">2010</div>
+                            <p>Основание журнала. Выпуск первого номера.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-right">
+                        <div class="timeline-content">
+                            <div class="timeline-year">2012</div>
+                            <p>Журнал включен в перечень рецензируемых научных изданий.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-left">
+                        <div class="timeline-content">
+                            <div class="timeline-year">2015</div>
+                            <p>Запуск онлайн-платформы для доступа к электронным версиям статей.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-right">
+                        <div class="timeline-content">
+                            <div class="timeline-year">2018</div>
+                            <p>Журнал включен в международные базы данных научных публикаций.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-left">
+                        <div class="timeline-content">
+                            <div class="timeline-year">2020</div>
+                            <p>Празднование 10-летия журнала. Запуск новой версии сайта.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item timeline-right">
+                        <div class="timeline-content">
+                            <div class="timeline-year">2023</div>
+                            <p>Расширение тематических направлений и увеличение периодичности выпусков.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card about-section">
+                <h2>Контактная информация</h2>
+                <p><strong>Адрес редакции:</strong> г. Москва, ул. Научная, д. 123</p>
+                <p><strong>Телефон:</strong> +7 (123) 456-78-90</p>
+                <p><strong>Email:</strong> info@scientific-journal.com</p>
+                <p><strong>Время работы:</strong> Пн-Пт с 9:00 до 18:00</p>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h3 class="footer-title">О журнале</h3>
+                <p>Научный журнал публикует оригинальные исследования в различных областях науки.</p>
+            </div>
+            <div class="footer-section">
+                <h3 class="footer-title">Контакты</h3>
+                <p>Email: info@scientific-journal.com</p>
+                <p>Телефон: +7 (123) 456-78-90</p>
+            </div>
+            <div class="footer-section">
+                <h3 class="footer-title">Ссылки</h3>
+                <p><a href="/about.html">О журнале</a></p>
+                <p><a href="/cgi-bin/issues.pl">Архив выпусков</a></p>
+                <p><a href="/cgi-bin/auth.pl?action=register_form">Регистрация</a></p>
+            </div>
+        </div>
+        <div class="container text-center mt-3">
+            <p>&copy; 2025 Научный журнал. Все права защищены.</p>
+        </div>
+    </footer>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html> 
