@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let matrixA = null;
     let matrixB = null;
     
+    // Добавим глобальные переменные для отслеживания редактируемой матрицы
+    let editingMatrix = null; // 'A' или 'B'
+    let modal = null;
+    
     // Обработчики событий для элементов формы
     document.getElementById('rows').addEventListener('change', updateManualInputForm);
     document.getElementById('cols').addEventListener('change', updateManualInputForm);
@@ -54,6 +58,33 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('clear-matrix-b').addEventListener('click', clearMatrixB);
     document.getElementById('clear-result').addEventListener('click', clearResult);
     
+    // Добавим обработчики событий для кнопок редактирования
+    document.getElementById('edit-matrix-a').addEventListener('click', function() {
+        openEditModal('A');
+    });
+
+    document.getElementById('edit-matrix-b').addEventListener('click', function() {
+        openEditModal('B');
+    });
+    
+    // Инициализация модального окна
+    modal = document.getElementById('edit-modal');
+    
+    // Закрытие модального окна при клике на крестик
+    document.querySelector('.close').addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    // Закрытие модального окна при клике вне его области
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Сохранение изменений
+    document.getElementById('save-matrix-edit').addEventListener('click', saveMatrixEdit);
+    
     // Функция для создания формы ручного ввода матрицы A
     function updateManualInputForm() {
         const rows = parseInt(document.getElementById('rows').value);
@@ -98,14 +129,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const cols = parseInt(document.getElementById('cols').value);
         const fillType = document.querySelector('input[name="fill-type"]:checked').value;
         
-        // Формируем данные для отправки
+        // Проверка ограничений
+        if (rows > 10 || cols > 10) {
+            showError('Максимальный размер матрицы: 10x10');
+            return;
+        }
+        
         const formData = new FormData();
         formData.append('action', 'create');
         formData.append('rows', rows);
         formData.append('cols', cols);
         formData.append('fill_type', fillType);
         
-        // Если выбран ручной ввод, добавляем значения ячеек
         if (fillType === 'manual') {
             for (let i = 0; i < rows; i++) {
                 for (let j = 0; j < cols; j++) {
@@ -115,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Отправляем запрос на сервер
         fetch('/cgi-bin/matrix.pl', {
             method: 'POST',
             body: formData
@@ -123,10 +157,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Сохраняем матрицу в глобальную переменную
                 matrixA = data.data.matrix;
+                
+                // Обновляем отображение
                 document.getElementById('matrix-a-display').innerHTML = data.data.html;
                 
-                // Скрываем блок создания матрицы и показываем блок операций
+                // Скрываем блок создания и показываем блок операций
                 document.querySelector('.left-panel .section:first-child').style.display = 'none';
                 document.getElementById('matrix-operations').style.display = 'block';
                 
@@ -487,5 +524,79 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function hideError() {
         document.getElementById('error-container').style.display = 'none';
+    }
+
+    // Функция открытия модального окна для редактирования
+    function openEditModal(matrixType) {
+        editingMatrix = matrixType;
+        const matrix = matrixType === 'A' ? matrixA : matrixB;
+        
+        if (!matrix) {
+            showError(`Матрица ${matrixType} не создана`);
+            return;
+        }
+        
+        const container = document.getElementById('edit-matrix-container');
+        let html = '<table>';
+        
+        for (let i = 0; i < matrix.length; i++) {
+            html += '<tr>';
+            for (let j = 0; j < matrix[i].length; j++) {
+                html += `<td><input type="number" step="any" id="edit_cell_${i}_${j}" value="${matrix[i][j]}"></td>`;
+            }
+            html += '</tr>';
+        }
+        
+        html += '</table>';
+        container.innerHTML = html;
+        
+        // Отображаем модальное окно
+        modal.style.display = 'block';
+    }
+
+    // Функция сохранения изменений в матрице
+    function saveMatrixEdit() {
+        const matrix = editingMatrix === 'A' ? matrixA : matrixB;
+        
+        if (!matrix) {
+            showError(`Ошибка: матрица ${editingMatrix} не найдена`);
+            return;
+        }
+        
+        // Собираем данные из формы
+        for (let i = 0; i < matrix.length; i++) {
+            for (let j = 0; j < matrix[i].length; j++) {
+                const input = document.getElementById(`edit_cell_${i}_${j}`);
+                matrix[i][j] = parseFloat(input.value) || 0;
+            }
+        }
+        
+        // Обновляем отображение матрицы
+        updateMatrixDisplay(editingMatrix);
+        
+        // Закрываем модальное окно
+        modal.style.display = 'none';
+        
+        showResult(`Матрица ${editingMatrix} обновлена`, 
+            `<p>Матрица ${editingMatrix} была успешно отредактирована.</p>`);
+    }
+
+    // Функция обновления отображения матрицы
+    function updateMatrixDisplay(matrixType) {
+        const matrix = matrixType === 'A' ? matrixA : matrixB;
+        const displayId = matrixType === 'A' ? 'matrix-a-display' : 'matrix-b-display';
+        
+        // Формируем HTML для отображения матрицы
+        let html = '<table class="matrix">';
+        for (let i = 0; i < matrix.length; i++) {
+            html += '<tr>';
+            for (let j = 0; j < matrix[i].length; j++) {
+                html += `<td>${matrix[i][j]}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</table>';
+        
+        document.getElementById(displayId).innerHTML = html;
     }
 }); 
