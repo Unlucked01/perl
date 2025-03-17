@@ -424,17 +424,6 @@ sub apply_corrections {
 HTML
 }
 
-# Вспомогательная функция для экранирования HTML-сущностей
-sub encode_entities {
-    my ($text) = @_;
-    $text =~ s/&/&amp;/g;
-    $text =~ s/</&lt;/g;
-    $text =~ s/>/&gt;/g;
-    $text =~ s/"/&quot;/g;
-    $text =~ s/'/&#39;/g;
-    return $text;
-}
-
 # Основной код
 eval {
     ensure_dictionary_exists();

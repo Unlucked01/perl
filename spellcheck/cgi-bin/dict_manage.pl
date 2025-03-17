@@ -81,20 +81,8 @@ sub view_dictionary {
     
     # Сортировка по алфавиту
     @words = sort { $a->{word} cmp $b->{word} } @words;
-    
-    # Пагинация
-    my $page = $q->param('page') || 1;
-    my $per_page = 50;
-    my $total = scalar @words;
-    my $pages = int(($total + $per_page - 1) / $per_page);
-    $page = 1 if $page < 1;
-    $page = $pages if $page > $pages && $pages > 0;
-    
-    my $start = ($page - 1) * $per_page;
-    my $end = $start + $per_page - 1;
-    $end = $total - 1 if $end >= $total;
-    
-    my @page_words = @words[$start..$end];
+
+    my @page_words = @words;
     
     print <<HTML;
 <!DOCTYPE html>
@@ -111,24 +99,21 @@ sub view_dictionary {
         }
     </script>
     <style>
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
+        .edit-btn, .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 5px;
+            border-radius: 3px;
         }
-        .pagination a, .pagination span {
-            padding: 8px 16px;
-            text-decoration: none;
-            border: 1px solid #ddd;
-            margin: 0 4px;
+        
+        .edit-btn:hover {
+            background-color: #e3f2fd;
         }
-        .pagination a:hover {
-            background-color: #f1f1f1;
-        }
-        .pagination .active {
-            background-color: #4a6fa5;
-            color: white;
-            border: 1px solid #4a6fa5;
+        
+        .delete-btn:hover {
+            background-color: #ffebee;
         }
     </style>
 </head>
@@ -200,39 +185,8 @@ HTML
 HTML
     }
     
-    print "</table>\n";
-    
-    # Пагинация
-    if ($pages > 1) {
-        print "<div class='pagination'>\n";
-        
-        if ($page > 1) {
-            print "<a href='/cgi-bin/dict_manage.pl?page=".($page-1)."&search=$search'>&laquo;</a>\n";
-        } else {
-            print "<span>&laquo;</span>\n";
-        }
-        
-        my $start_page = max(1, $page - 2);
-        my $end_page = min($pages, $page + 2);
-        
-        for (my $i = $start_page; $i <= $end_page; $i++) {
-            if ($i == $page) {
-                print "<span class='active'>$i</span>\n";
-            } else {
-                print "<a href='/cgi-bin/dict_manage.pl?page=$i&search=$search'>$i</a>\n";
-            }
-        }
-        
-        if ($page < $pages) {
-            print "<a href='/cgi-bin/dict_manage.pl?page=".($page+1)."&search=$search'>&raquo;</a>\n";
-        } else {
-            print "<span>&raquo;</span>\n";
-        }
-        
-        print "</div>\n";
-    }
-    
     print <<HTML;
+            </table>
         </div>
         
         <div class="navigation-buttons" style="margin-top: 20px;">
@@ -297,23 +251,6 @@ HTML
         .close:focus {
             color: black;
             text-decoration: none;
-        }
-        
-        .edit-btn, .delete-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            margin-right: 5px;
-            border-radius: 3px;
-        }
-        
-        .edit-btn:hover {
-            background-color: #e3f2fd;
-        }
-        
-        .delete-btn:hover {
-            background-color: #ffebee;
         }
     </style>
     
