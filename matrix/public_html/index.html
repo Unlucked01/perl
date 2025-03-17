@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Матричный калькулятор</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Матричный калькулятор</h1>
+    
+    <div class="split-container">
+        <!-- Левая панель для создания и управления матрицами -->
+        <div class="left-panel">
+            <div class="section">
+                <h2>Создание матрицы</h2>
+                <div class="form-group">
+                    <label for="rows">Количество строк:</label>
+                    <input type="number" id="rows" min="1" max="10" value="3">
+                </div>
+                <div class="form-group">
+                    <label for="cols">Количество столбцов:</label>
+                    <input type="number" id="cols" min="1" max="10" value="3">
+                </div>
+                <div class="form-group">
+                    <label>Заполнение:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="fill-type" value="zeros" checked> Нулями
+                        </label>
+                        <label>
+                            <input type="radio" name="fill-type" value="random"> Случайными числами
+                        </label>
+                        <label>
+                            <input type="radio" name="fill-type" value="manual"> Вручную
+                        </label>
+                    </div>
+                </div>
+                <div id="manual-input" class="hidden">
+                    <div class="matrix-input" id="matrix-input-container"></div>
+                </div>
+                <button id="create-matrix">Создать матрицу A</button>
+            </div>
+            
+            <div class="section" id="matrix-operations" style="display: none;">
+                <h2>Операции с матрицей</h2>
+                <div class="matrix-container">
+                    <div class="matrix-header">
+                        <h3>Матрица A</h3>
+                        <button id="clear-matrix-a" class="clear-btn">Очистить</button>
+                    </div>
+                    <div id="matrix-a-display"></div>
+                </div>
+                
+                <div class="operations">
+                    <button id="transpose">Транспонировать</button>
+                    <button id="min-max">Найти мин/макс</button>
+                    <button id="inverse">Обратная матрица</button>
+                </div>
+                
+                <div class="two-matrix-operations">
+                    <h3>Операции с двумя матрицами</h3>
+                    <button id="show-matrix-b-form">Создать матрицу B</button>
+                    
+                    <div id="matrix-b-form" class="hidden">
+                        <div class="form-group">
+                            <label for="rows-b">Количество строк:</label>
+                            <input type="number" id="rows-b" min="1" max="10" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="cols-b">Количество столбцов:</label>
+                            <input type="number" id="cols-b" min="1" max="10" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label>Заполнение:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="fill-type-b" value="zeros" checked> Нулями
+                                </label>
+                                <label>
+                                    <input type="radio" name="fill-type-b" value="random"> Случайными числами
+                                </label>
+                                <label>
+                                    <input type="radio" name="fill-type-b" value="manual"> Вручную
+                                </label>
+                            </div>
+                        </div>
+                        <div id="manual-input-b" class="hidden">
+                            <div class="matrix-input" id="matrix-input-container-b"></div>
+                        </div>
+                        <button id="create-matrix-b">Создать матрицу B</button>
+                    </div>
+                    
+                    <div id="matrix-b-display-container" class="hidden">
+                        <div class="matrix-container">
+                            <div class="matrix-header">
+                                <h3>Матрица B</h3>
+                                <button id="clear-matrix-b" class="clear-btn">Очистить</button>
+                            </div>
+                            <div id="matrix-b-display"></div>
+                        </div>
+                        
+                        <div class="operations">
+                            <button id="add">Сложить A + B</button>
+                            <button id="multiply">Умножить A * B</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Правая панель для отображения результатов -->
+        <div class="right-panel">
+            <div class="section" id="result-section">
+                <div id="result-container">
+                    <p class="placeholder-text">Здесь будет отображаться результат операций с матрицами.</p>
+                </div>
+                <div id="error-container" class="error"></div>
+                <button id="clear-result" class="clear-btn">Очистить результат</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html> 

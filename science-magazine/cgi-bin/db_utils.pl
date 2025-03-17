@@ -454,6 +454,109 @@ sub add_order_detail {
     return $detail_id;
 }
 
+# Функция для получения всех рукописей
+sub get_all_submissions {
+    my %submissions;
+    tie %submissions, 'DB_File', $SUBMISSIONS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $SUBMISSIONS_DB: $!";
+    
+    my @result;
+    foreach my $id (keys %submissions) {
+        my @data = split(/\|/, decode_utf8($submissions{$id}));
+        push @result, {
+            id => $id,
+            user_id => $data[0],
+            title => $data[1],
+            authors => $data[2],
+            abstract => $data[3],
+            content => $data[4],
+            author_comments => $data[5],
+            status => $data[6],
+            submission_date => $data[7],
+            reviewer_comments => $data[8]
+        };
+    }
+    
+    untie %submissions;
+    return @result;
+}
+
+# Функция для получения рукописи по ID
+sub get_submission_by_id {
+    my ($id) = @_;
+    
+    my %submissions;
+    tie %submissions, 'DB_File', $SUBMISSIONS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $SUBMISSIONS_DB: $!";
+    
+    my $submission;
+    if (exists $submissions{$id}) {
+        my @data = split(/\|/, decode_utf8($submissions{$id}));
+        $submission = {
+            id => $id,
+            user_id => $data[0],
+            title => $data[1],
+            authors => $data[2],
+            abstract => $data[3],
+            content => $data[4],
+            author_comments => $data[5],
+            status => $data[6],
+            submission_date => $data[7],
+            reviewer_comments => $data[8]
+        };
+    }
+    
+    untie %submissions;
+    return $submission;
+}
+
+# Функция для обновления статуса рукописи
+sub update_submission_status {
+    my ($id, $status, $reviewer_comments) = @_;
+    
+    my %submissions;
+    tie %submissions, 'DB_File', $SUBMISSIONS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $SUBMISSIONS_DB: $!";
+    
+    if (exists $submissions{$id}) {
+        my @data = split(/\|/, decode_utf8($submissions{$id}));
+        $data[6] = $status;
+        $data[8] = $reviewer_comments if defined $reviewer_comments;
+        
+        $submissions{$id} = encode_utf8(join("|", @data));
+    }
+    
+    untie %submissions;
+    return 1;
+}
+
+# Функция для создания новой рукописи
+sub create_submission {
+    my ($user_id, $title, $authors, $abstract, $content, $author_comments) = @_;
+    
+    my %submissions;
+    tie %submissions, 'DB_File', $SUBMISSIONS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $SUBMISSIONS_DB: $!";
+    
+    my $submission_id = get_next_id($SUBMISSIONS_DB);
+    my $submission_data = encode_utf8(join("|", 
+        $user_id,
+        $title,
+        $authors,
+        $abstract,
+        $content,
+        $author_comments,
+        "new",  # начальный статус
+        strftime("%Y-%m-%d", localtime),
+        ""  # комментарии рецензента (пусто изначально)
+    ));
+    
+    $submissions{$submission_id} = $submission_data;
+    untie %submissions;
+    
+    return $submission_id;
+}
+
 # Экспортируем функции
 sub import {
     my $pkg = shift;

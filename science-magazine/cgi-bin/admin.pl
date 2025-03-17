@@ -29,6 +29,9 @@ db_utils->import(qw(
     update_order_status
     encode_utf8
     decode_utf8
+    get_all_submissions
+    get_submission_by_id
+    update_submission_status
 ));
 
 # Инициализируем базу данных
@@ -81,6 +84,14 @@ if ($action eq 'dashboard') {
     edit_order();
 } elsif ($action eq 'save_order') {
     save_order();
+} elsif ($action eq 'submissions') {
+    show_submissions();
+} elsif ($action eq 'view_submission') {
+    view_submission();
+} elsif ($action eq 'edit_submission_status') {
+    edit_submission_status();
+} elsif ($action eq 'publish_submission') {
+    publish_submission();
 } else {
     show_dashboard();
 }
@@ -262,7 +273,7 @@ HTML
                 <a href="/cgi-bin/admin.pl?action=issues">Выпуски</a>
                 <a href="/cgi-bin/admin.pl?action=articles">Статьи</a>
                 <a href="/cgi-bin/admin.pl?action=orders">Заказы</a>
-                <a href="/cgi-bin/admin.pl?action=stats">Статистика</a>
+                <a href="/cgi-bin/admin.pl?action=submissions">Рукописи</a>
             </div>
             
             <div class="stats-grid">
@@ -396,4 +407,262 @@ HTML
 </body>
 </html>
 HTML
+}
+
+
+
+sub show_submissions {
+    my $q = shift || CGI->new;
+    
+    print $q->header(-charset=>'utf-8');
+    print $q->start_html(-title=>'Управление рукописями', -encoding=>'utf-8');
+    print "<h1>Управление рукописями</h1>";
+    
+    # Получаем все поданные рукописи из БД
+    my @submissions = get_all_submissions();
+    
+    # Фильтр по статусу
+    my $status_filter = $q->param('status') || 'all';
+    my @filtered_submissions = $status_filter eq 'all' ? 
+        @submissions : 
+        grep { $_->{status} eq $status_filter } @submissions;
+    
+    # Навигация по статусам
+    print "<div style='margin-bottom: 20px;'>";
+    print "<a href='?action=submissions&status=all' class='btn " . ($status_filter eq 'all' ? 'active' : '') . "'>Все</a> ";
+    print "<a href='?action=submissions&status=new' class='btn " . ($status_filter eq 'new' ? 'active' : '') . "'>Новые</a> ";
+    print "<a href='?action=submissions&status=reviewing' class='btn " . ($status_filter eq 'reviewing' ? 'active' : '') . "'>На рецензии</a> ";
+    print "<a href='?action=submissions&status=accepted' class='btn " . ($status_filter eq 'accepted' ? 'active' : '') . "'>Принятые</a> ";
+    print "<a href='?action=submissions&status=rejected' class='btn " . ($status_filter eq 'rejected' ? 'active' : '') . "'>Отклоненные</a> ";
+    print "</div>";
+    
+    if (@filtered_submissions) {
+        print "<table border='1' style='width: 100%; border-collapse: collapse;'>";
+        print "<tr><th>ID</th><th>Название</th><th>Автор</th><th>Дата подачи</th><th>Статус</th><th>Действия</th></tr>";
+        
+        foreach my $submission (sort { $b->{submission_date} cmp $a->{submission_date} } @filtered_submissions) {
+            my $user = get_user_by_id($submission->{user_id});
+            my $author_name = $user ? $user->{full_name} : "Неизвестный автор";
+            
+            # Определяем цвет статуса
+            my $status_color = 
+                $submission->{status} eq 'new' ? 'blue' :
+                $submission->{status} eq 'reviewing' ? 'orange' :
+                $submission->{status} eq 'accepted' ? 'green' :
+                $submission->{status} eq 'rejected' ? 'red' : 'black';
+            
+            print "<tr>";
+            print "<td>$submission->{id}</td>";
+            print "<td>$submission->{title}</td>";
+            print "<td>$author_name</td>";
+            print "<td>$submission->{submission_date}</td>";
+            print "<td style='color: $status_color;'>$submission->{status}</td>";
+            print "<td>";
+            print "<a href='?action=view_submission&id=$submission->{id}'>Просмотр</a> | ";
+            print "<a href='?action=edit_submission_status&id=$submission->{id}'>Изменить статус</a>";
+            if ($submission->{status} eq 'accepted') {
+                print " | <a href='?action=publish_submission&id=$submission->{id}'>Опубликовать</a>";
+            }
+            print "</td>";
+            print "</tr>";
+        }
+        
+        print "</table>";
+    } else {
+        print "<p>Нет рукописей с выбранным статусом.</p>";
+    }
+    
+    print "<p><a href='?' class='btn'>Вернуться в панель администратора</a></p>";
+    
+    print $q->end_html;
+}
+
+sub view_submission {
+    my $q = shift || CGI->new;
+    my $submission_id = $q->param('id');
+    
+    my $submission = get_submission_by_id($submission_id);
+    unless ($submission) {
+        print $q->redirect(-uri => "/cgi-bin/admin.pl?action=submissions&error=Рукопись не найдена");
+        return;
+    }
+    
+    my $user = get_user_by_id($submission->{user_id});
+    
+    print $q->header(-charset=>'utf-8');
+    print $q->start_html(-title=>"Просмотр рукописи #$submission_id", -encoding=>'utf-8');
+    
+    print "<h1>Просмотр рукописи #$submission_id</h1>";
+    
+    print "<div style='background: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 20px;'>";
+    print "<h2>$submission->{title}</h2>";
+    
+    print "<p><strong>Автор:</strong> " . ($user ? $user->{full_name} : "Неизвестный автор") . "</p>";
+    print "<p><strong>Email:</strong> " . ($user ? $user->{email} : "Нет данных") . "</p>";
+    print "<p><strong>Дата подачи:</strong> $submission->{submission_date}</p>";
+    print "<p><strong>Статус:</strong> $submission->{status}</p>";
+    
+    print "<h3>Аннотация</h3>";
+    print "<div style='background: white; padding: 15px; border-radius: 5px;'>";
+    print "<p>$submission->{abstract}</p>";
+    print "</div>";
+    
+    print "<h3>Полный текст</h3>";
+    print "<div style='background: white; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto;'>";
+    print "<pre style='white-space: pre-wrap;'>$submission->{content}</pre>";
+    print "</div>";
+    
+    print "<h3>Комментарии автора</h3>";
+    print "<div style='background: white; padding: 15px; border-radius: 5px;'>";
+    print "<p>" . ($submission->{author_comments} || "Нет комментариев") . "</p>";
+    print "</div>";
+    
+    if ($submission->{reviewer_comments}) {
+        print "<h3>Комментарии рецензента</h3>";
+        print "<div style='background: white; padding: 15px; border-radius: 5px;'>";
+        print "<p>$submission->{reviewer_comments}</p>";
+        print "</div>";
+    }
+    
+    print "</div>";
+    
+    print "<div style='display: flex; gap: 10px;'>";
+    print "<a href='?action=edit_submission_status&id=$submission_id' class='btn'>Изменить статус</a>";
+    
+    if ($submission->{status} eq 'accepted') {
+        print "<a href='?action=publish_submission&id=$submission_id' class='btn'>Опубликовать</a>";
+    }
+    
+    print "<a href='?action=submissions' class='btn'>Назад к списку</a>";
+    print "</div>";
+    
+    print $q->end_html;
+}
+
+sub edit_submission_status {
+    my $q = shift || CGI->new;
+    my $submission_id = $q->param('id');
+    
+    my $submission = get_submission_by_id($submission_id);
+    unless ($submission) {
+        print $q->redirect(-uri => "/cgi-bin/admin.pl?action=submissions&error=Рукопись не найдена");
+        return;
+    }
+    
+    if ($q->param('save')) {
+        my $new_status = $q->param('status');
+        my $reviewer_comments = $q->param('reviewer_comments');
+        
+        # Обновляем статус рукописи
+        update_submission_status($submission_id, $new_status, $reviewer_comments);
+        
+        print $q->redirect(-uri => "/cgi-bin/admin.pl?action=submissions&success=Статус рукописи успешно обновлен");
+        return;
+    }
+    
+    print $q->header(-charset=>'utf-8');
+    print $q->start_html(-title=>"Изменение статуса рукописи #$submission_id", -encoding=>'utf-8');
+    
+    print "<h1>Изменение статуса рукописи #$submission_id</h1>";
+    
+    print "<form method='post' action='?action=edit_submission_status&id=$submission_id'>";
+    print "<input type='hidden' name='save' value='1'>";
+    
+    print "<div style='margin-bottom: 20px;'>";
+    print "<label for='status'><strong>Статус:</strong></label><br>";
+    print "<select id='status' name='status' style='padding: 8px; width: 100%; max-width: 300px;'>";
+    print "<option value='new'" . ($submission->{status} eq 'new' ? " selected" : "") . ">Новая</option>";
+    print "<option value='reviewing'" . ($submission->{status} eq 'reviewing' ? " selected" : "") . ">На рецензии</option>";
+    print "<option value='accepted'" . ($submission->{status} eq 'accepted' ? " selected" : "") . ">Принята</option>";
+    print "<option value='rejected'" . ($submission->{status} eq 'rejected' ? " selected" : "") . ">Отклонена</option>";
+    print "</select>";
+    print "</div>";
+    
+    print "<div style='margin-bottom: 20px;'>";
+    print "<label for='reviewer_comments'><strong>Комментарии рецензента:</strong></label><br>";
+    print "<textarea id='reviewer_comments' name='reviewer_comments' style='padding: 8px; width: 100%; height: 200px;'>" . 
+          ($submission->{reviewer_comments} || "") . "</textarea>";
+    print "</div>";
+    
+    print "<div style='display: flex; gap: 10px;'>";
+    print "<button type='submit' class='btn'>Сохранить</button>";
+    print "<a href='?action=view_submission&id=$submission_id' class='btn'>Отмена</a>";
+    print "</div>";
+    
+    print "</form>";
+    
+    print $q->end_html;
+}
+
+sub publish_submission {
+    my $q = shift || CGI->new;
+    my $submission_id = $q->param('id');
+    
+    my $submission = get_submission_by_id($submission_id);
+    unless ($submission && $submission->{status} eq 'accepted') {
+        print $q->redirect(-uri => "/cgi-bin/admin.pl?action=submissions&error=Рукопись не найдена или не может быть опубликована");
+        return;
+    }
+    
+    if ($q->param('save')) {
+        my $issue_id = $q->param('issue_id');
+        my $price = $q->param('price');
+        
+        # Создаем новую статью на основе рукописи
+        my $article_id = create_article(
+            $issue_id,
+            $submission->{title},
+            $submission->{authors},
+            $submission->{abstract},
+            $submission->{content},
+            $price,
+            'published',
+            strftime("%Y-%m-%d", localtime)
+        );
+        
+        # Обновляем статус рукописи на 'published'
+        update_submission_status($submission_id, 'published', "Опубликована как статья #$article_id");
+        
+        print $q->redirect(-uri => "/cgi-bin/admin.pl?action=articles&success=Рукопись успешно опубликована как статья");
+        return;
+    }
+    
+    # Получаем список выпусков для выбора
+    my @issues = get_all_issues();
+    
+    print $q->header(-charset=>'utf-8');
+    print $q->start_html(-title=>"Публикация рукописи #$submission_id", -encoding=>'utf-8');
+    
+    print "<h1>Публикация рукописи #$submission_id</h1>";
+    
+    print "<form method='post' action='?action=publish_submission&id=$submission_id'>";
+    print "<input type='hidden' name='save' value='1'>";
+    
+    print "<div style='margin-bottom: 20px;'>";
+    print "<label for='issue_id'><strong>Выберите выпуск для публикации:</strong></label><br>";
+    print "<select id='issue_id' name='issue_id' style='padding: 8px; width: 100%; max-width: 400px;' required>";
+    print "<option value=''>-- Выберите выпуск --</option>";
+    
+    foreach my $issue (sort { $b->{year} <=> $a->{year} || $b->{number} <=> $a->{number} } @issues) {
+        if ($issue->{status} eq 'published' || $issue->{status} eq 'in_progress') {
+            print "<option value='$issue->{id}'>№$issue->{number} ($issue->{year}) - $issue->{title}</option>";
+        }
+    }
+    
+    print "</select>";
+    print "</div>";
+    
+    print "<div style='margin-bottom: 20px;'>";
+    print "<label for='price'><strong>Цена статьи (руб.):</strong></label><br>";
+    print "<input type='number' id='price' name='price' value='300' min='0' style='padding: 8px; width: 200px;' required>";
+    print "</div>";
+    
+    print "<div style='display: flex; gap: 10px;'>";
+    print "<button type='submit' class='btn'>Опубликовать</button>";
+    print "<a href='?action=view_submission&id=$submission_id' class='btn'>Отмена</a>";
+    print "</div>";
+    
+    print "</form>";
+    
+    print $q->end_html;
 } 

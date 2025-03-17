@@ -1,0 +1,256 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    margin: 20px 0;
+    color: #444;
+}
+
+.split-container {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 100px);
+    gap: 20px;
+    padding: 0 20px 20px;
+    box-sizing: border-box;
+}
+
+.left-panel, .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.section {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.right-panel .section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#result-container {
+    flex-grow: 1;
+    min-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+}
+
+.placeholder-text {
+    color: #999;
+    text-align: center;
+    margin-top: 100px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="number"] {
+    width: 60px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 15px;
+}
+
+.radio-group label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+.clear-btn {
+    background: #f44336;
+}
+
+.clear-btn:hover {
+    background: #d32f2f;
+}
+
+.hidden {
+    display: none;
+}
+
+.matrix-input {
+    margin: 15px 0;
+    overflow-x: auto;
+}
+
+.matrix-input table {
+    border-collapse: collapse;
+}
+
+.matrix-input td {
+    padding: 5px;
+}
+
+.matrix-input input {
+    width: 60px;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.matrix-container {
+    margin-bottom: 20px;
+}
+
+.matrix-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.matrix-header h3 {
+    margin: 0;
+}
+
+.matrix-header .clear-btn {
+    margin: 0;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.operations {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.two-matrix-operations {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+table.matrix {
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-family: monospace;
+}
+
+table.matrix td {
+    padding: 8px 12px;
+    text-align: right;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.error {
+    color: #d9534f;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #f8d7da;
+    border-radius: 4px;
+    display: none;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .split-container {
+        flex-direction: column;
+    }
+    
+    .left-panel, .right-panel {
+        width: 100%;
+    }
+}
+
+.operation-result {
+    margin-top: 20px;
+}
+
+.operation-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.matrix-block {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.matrix-block h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #444;
+    font-size: 16px;
+}
+
+.operation-symbol {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.min-max-result {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e8f5e9;
+    border-radius: 5px;
+    border-left: 4px solid #4CAF50;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .operation-row {
+        flex-direction: column;
+    }
+    
+    .operation-symbol {
+        transform: rotate(90deg);
+        margin: 10px 0;
+    }
+} 
