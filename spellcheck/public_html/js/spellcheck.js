@@ -15,7 +15,6 @@ function replaceWord(position, replacement) {
 }
 
 // Функция для добавления слова в словарь
-// Функция для добавления слова в словарь
 function addToDictionary(word) {
     fetch('/cgi-bin/spellcheck.pl?action=add_word&word=' + encodeURIComponent(word))
         .then(response => response.text())

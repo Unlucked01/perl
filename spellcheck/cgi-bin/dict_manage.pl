@@ -180,6 +180,9 @@ HTML
                     <td>$escaped_word</td>
                     <td>$date</td>
                     <td>
+                        <button onclick="editWord('$escaped_word')" class="edit-btn" title="Редактировать '$escaped_word'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
                         <button onclick="confirmDelete('$escaped_word')" class="delete-btn" title="Удалить '$escaped_word'">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         </button>
@@ -241,6 +244,105 @@ HTML
             </button>
         </div>
     </div>
+    
+    <!-- Модальное окно для редактирования слова -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Редактировать слово</h3>
+            <form action="/cgi-bin/dict_manage.pl" method="get">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="oldWord" name="oldWord" value="">
+                <div class="form-group">
+                    <label for="newWord">Новое слово:</label>
+                    <input type="text" id="newWord" name="newWord" required>
+                </div>
+                <button type="submit" class="btn">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+        
+        .edit-btn, .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        
+        .edit-btn:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .delete-btn:hover {
+            background-color: #ffebee;
+        }
+    </style>
+    
+    <script>
+        // Получаем модальное окно
+        var modal = document.getElementById('editModal');
+        
+        // Получаем элемент закрытия модального окна
+        var span = document.getElementsByClassName("close")[0];
+        
+        // Функция для открытия модального окна редактирования
+        function editWord(word) {
+            document.getElementById('oldWord').value = word;
+            document.getElementById('newWord').value = word;
+            modal.style.display = "block";
+        }
+        
+        // Закрытие модального окна при клике на крестик
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+        
+        // Закрытие модального окна при клике вне его области
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
 HTML
@@ -379,6 +481,75 @@ sub encode_entities {
     return $text;
 }
 
+# Функция для редактирования слова в словаре
+sub edit_word {
+    my $old_word = $q->param('oldWord');
+    my $new_word = $q->param('newWord');
+    $old_word = decode('UTF-8', $old_word) unless Encode::is_utf8($old_word);
+    $new_word = decode('UTF-8', $new_word) unless Encode::is_utf8($new_word);
+    
+    if ($old_word && $new_word) {
+        my %dictionary;
+        tie %dictionary, 'DB_File', $dict_file, O_RDWR, 0666, $DB_HASH
+            or die "Cannot open $dict_file: $!";
+        
+        # Кодируем слова в UTF-8
+        my $encoded_old_word = encode('UTF-8', $old_word);
+        my $encoded_new_word = encode('UTF-8', $new_word);
+        
+        # Получаем дату добавления старого слова
+        my $date = $dictionary{$encoded_old_word};
+        
+        # Удаляем старое слово и добавляем новое с той же датой
+        delete $dictionary{$encoded_old_word};
+        $dictionary{$encoded_new_word} = $date;
+        
+        untie %dictionary;
+        
+        print <<HTML;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Слово изменено</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="text-align: center; margin-top: 50px;">
+            <h3>Слово "$old_word" успешно изменено на "$new_word".</h3>
+            <p style="margin-top: 20px;">
+                <a href="/cgi-bin/dict_manage.pl" class="btn">Вернуться к словарю</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+HTML
+    } else {
+        print <<HTML;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ошибка</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="text-align: center; margin-top: 50px;">
+            <h3>Ошибка: не указано старое или новое слово.</h3>
+            <p style="margin-top: 20px;">
+                <a href="/cgi-bin/dict_manage.pl" class="btn">Вернуться к словарю</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+HTML
+    }
+}
+
 # Основной код
 eval {
     ensure_dictionary_exists();
@@ -389,6 +560,8 @@ eval {
         add_word();
     } elsif ($action eq 'delete') {
         delete_word();
+    } elsif ($action eq 'edit') {
+        edit_word();
     } else {
         view_dictionary();
     }
