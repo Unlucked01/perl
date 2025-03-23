@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О проекте - ТВ Программа</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ТВ Программа</h1>
+            <nav>
+                <ul>
+                    <li><a href="/index.html">Главная</a></li>
+                    <li><a href="/cgi-bin/channels.pl">Телеканалы</a></li>
+                    <li><a href="/cgi-bin/programs.pl">Программа передач</a></li>
+                    <li><a href="/cgi-bin/admin.pl">Управление</a></li>
+                    <li><a href="/about.html" class="active">О проекте</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="about-section">
+                <h2>О проекте "ТВ Программа"</h2>
+                <div class="about-content">
+                    <img src="/img/about.jpg" alt="О проекте" class="about-image">
+                    <div class="about-text">
+                        <p>Проект "ТВ Программа" создан для удобного просмотра телевизионной программы передач. Наш сервис позволяет пользователям быстро находить интересующие их передачи, фильтровать контент по категориям и времени показа.</p>
+                        <p>Основные возможности проекта:</p>
+                        <ul>
+                            <li>Просмотр полного списка телеканалов</li>
+                            <li>Отображение программы передач на выбранную дату</li>
+                            <li>Фильтрация передач по категориям</li>
+                            <li>Фильтрация по времени показа</li>
+                            <li>Поиск передач по названию</li>
+                        </ul>
+                        <p>Проект разработан с использованием технологий Perl CGI для серверной части и HTML/CSS/JavaScript для клиентской части. Данные хранятся в базе данных с использованием DB_File.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="team-section">
+                <h2>Наша команда</h2>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <img src="/img/team1.jpg" alt="Разработчик">
+                        <h3>Иван Иванов</h3>
+                        <p>Главный разработчик</p>
+                    </div>
+                    <div class="team-member">
+                        <img src="/img/team2.jpg" alt="Дизайнер">
+                        <h3>Мария Петрова</h3>
+                        <p>UI/UX дизайнер</p>
+                    </div>
+                    <div class="team-member">
+                        <img src="/img/team3.jpg" alt="Контент-менеджер">
+                        <h3>Алексей Сидоров</h3>
+                        <p>Контент-менеджер</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="contact-section">
+                <h2>Свяжитесь с нами</h2>
+                <div class="contact-form">
+                    <form action="#" method="post">
+                        <div class="form-group">
+                            <label for="name">Имя:</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Сообщение:</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn primary">Отправить</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ТВ Программа</h3>
+                    <p>Сервис для просмотра телепрограммы</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Навигация</h3>
+                    <ul>
+                        <li><a href="/index.html">Главная</a></li>
+                        <li><a href="/cgi-bin/channels.pl">Телеканалы</a></li>
+                        <li><a href="/cgi-bin/programs.pl">Программа передач</a></li>
+                        <li><a href="/about.html">О проекте</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Контакты</h3>
+                    <p>Email: info@tvprogram.ru</p>
+                    <p>Телефон: +7 (123) 456-78-90</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 ТВ Программа. Все права защищены.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТВ Программа - Главная</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ТВ Программа</h1>
+            <nav>
+                <ul>
+                    <li><a href="/index.html" class="active">Главная</a></li>
+                    <li><a href="/cgi-bin/channels.pl">Телеканалы</a></li>
+                    <li><a href="/cgi-bin/programs.pl">Программа передач</a></li>
+                    <li><a href="/cgi-bin/admin.pl">Управление</a></li>
+                    <li><a href="/about.html">О проекте</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="hero">
+                <h2>Добро пожаловать в ТВ Программу!</h2>
+                <p>Удобный сервис для просмотра телепрограммы ваших любимых каналов</p>
+                <div class="buttons">
+                    <a href="/cgi-bin/channels.pl" class="btn primary">Смотреть каналы</a>
+                    <a href="/cgi-bin/programs.pl" class="btn secondary">Программа передач</a>
+                </div>
+            </section>
+            
+            <section class="features">
+                <h2>Возможности сервиса</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <img src="/img/channels.png" alt="Телеканалы">
+                        <h3>Все телеканалы</h3>
+                        <p>Просматривайте полный список доступных телеканалов</p>
+                    </div>
+                    <div class="feature-card">
+                        <img src="/img/schedule.png" alt="Расписание">
+                        <h3>Программа передач</h3>
+                        <p>Узнайте, что показывают на выбранном канале</p>
+                    </div>
+                    <div class="feature-card">
+                        <img src="/img/categories.png" alt="Категории">
+                        <h3>Фильтрация по категориям</h3>
+                        <p>Находите передачи по интересующим вас категориям</p>
+                    </div>
+                    <div class="feature-card">
+                        <img src="/img/time.png" alt="Время">
+                        <h3>Фильтрация по времени</h3>
+                        <p>Выбирайте передачи в удобное для вас время</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="popular-channels">
+                <h2>Популярные каналы</h2>
+                <div class="channel-grid">
+                    <a href="/cgi-bin/programs.pl?channel=1" class="channel-card">
+                        <img src="/img/channel1.png" alt="Первый канал">
+                        <h3>Первый канал</h3>
+                    </a>
+                    <a href="/cgi-bin/programs.pl?channel=2" class="channel-card">
+                        <img src="/img/channel2.png" alt="Россия 1">
+                        <h3>Россия 1</h3>
+                    </a>
+                    <a href="/cgi-bin/programs.pl?channel=3" class="channel-card">
+                        <img src="/img/channel3.png" alt="НТВ">
+                        <h3>НТВ</h3>
+                    </a>
+                    <a href="/cgi-bin/programs.pl?channel=4" class="channel-card">
+                        <img src="/img/channel4.png" alt="ТНТ">
+                        <h3>ТНТ</h3>
+                    </a>
+                </div>
+                <div class="center">
+                    <a href="/cgi-bin/channels.pl" class="btn secondary">Все каналы</a>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ТВ Программа</h3>
+                    <p>Сервис для просмотра телепрограммы</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Навигация</h3>
+                    <ul>
+                        <li><a href="/index.html">Главная</a></li>
+                        <li><a href="/cgi-bin/channels.pl">Телеканалы</a></li>
+                        <li><a href="/cgi-bin/programs.pl">Программа передач</a></li>
+                        <li><a href="/about.html">О проекте</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Контакты</h3>
+                    <p>Email: info@tvprogram.ru</p>
+                    <p>Телефон: +7 (123) 456-78-90</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 ТВ Программа. Все права защищены.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html> 
