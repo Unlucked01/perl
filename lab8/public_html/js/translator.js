@@ -48,9 +48,7 @@ function updateTranslation() {
     }, 500);
 }
 
-// Initialize the page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Set up event listeners
     document.getElementById('source_text').addEventListener('keyup', updateTranslation);
     document.getElementById('switch-btn').addEventListener('click', switchLanguages);
 }); 
