@@ -84,10 +84,43 @@ function showNotification(message) {
     }, 3000);
 }
 
+// Check if user is logged in and get their role
+function checkUserRole() {
+    // Get the session cookie
+    const cookies = document.cookie.split(';');
+    let sessionCookie = '';
+    
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith('session=')) {
+            sessionCookie = cookie.substring('session='.length);
+            break;
+        }
+    }
+    
+    if (sessionCookie) {
+        const [userId, userRole] = sessionCookie.split(':');
+        
+        // If user is admin or editor, show the admin panel link
+        if (userRole === 'admin' || userRole === 'editor') {
+            document.getElementById('admin-link-container').innerHTML = 
+                '<a href="/cgi-bin/admin.pl">Панель администратора</a>';
+        }
+        
+        // Change the auth link to personal profile
+        document.getElementById('auth-link').textContent = 'Личный кабинет';
+        document.getElementById('auth-link').href = '/cgi-bin/auth.pl?action=profile';
+    }
+}
+
+// Run when the page loads
+
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     // Обновляем счетчик корзины
     updateCartCounter();
+    checkUserRole();
     
     // Добавляем обработчики событий для форм
     const forms = document.querySelectorAll('form[data-validate="true"]');

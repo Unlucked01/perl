@@ -530,6 +530,7 @@ HTML
             <div class="card mb-4">
                 <h2 class="card-title">Панель администратора</h2>
                 <p>Здесь вы можете управлять пользователями и просматривать статистику.</p>
+                <a href="/cgi-bin/admin.pl" class="btn">Панель администратора</a>
                 <a href="/cgi-bin/admin.pl?action=users" class="btn">Управление пользователями</a>
                 <a href="/cgi-bin/admin.pl?action=stats" class="btn">Статистика продаж</a>
             </div>

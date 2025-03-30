@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина | Научный журнал</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">Научный журнал</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Главная</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="issues.html">Выпуски</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="about.html">О журнале</a>
+                        </li>
+                    </ul>
+                    <div class="d-flex">
+                        <a href="cart.html" class="btn btn-outline-light me-2 active">
+                            <i class="bi bi-cart"></i> Корзина
+                        </a>
+                        <a href="/cgi-bin/login.pl" class="btn btn-outline-light">Войти</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container my-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="index.html">Главная</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Корзина</li>
+            </ol>
+        </nav>
+        
+        <h1 class="mb-4">Корзина</h1>
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Cart items will be loaded here -->
+                <div id="cartItems">
+                    <div class="alert alert-info" id="emptyCartMessage" style="display: none;">
+                        Ваша корзина пуста. <a href="issues.html" class="alert-link">Перейдите к выпускам</a>, чтобы выбрать интересующие вас материалы.
+                    </div>
+                    
+                    <div class="card mb-4" id="cartItemsList" style="display: none;">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0">Товары в корзине</h5>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <button class="btn btn-sm btn-outline-danger" id="clearCartBtn">
+                                        <i class="bi bi-trash"></i> Очистить корзину
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush" id="cartItemsContainer">
+                                <!-- Cart items will be inserted here by JavaScript -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card mb-4" id="orderSummary" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0">Итого</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Товаров в корзине:</span>
+                            <span id="totalItems">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Стоимость:</span>
+                            <span id="subtotal">0 ₽</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3 fw-bold">
+                            <span>Итого к оплате:</span>
+                            <span id="totalPrice">0 ₽</span>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <a href="/cgi-bin/checkout.pl" class="btn btn-primary" id="checkoutBtn">
+                                Оформить заказ
+                            </a>
+                            <a href="issues.html" class="btn btn-outline-secondary">
+                                Продолжить покупки
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" id="customerInfo">
+                    <div class="card-header">
+                        <h5 class="mb-0">Способы оплаты</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Доступные способы оплаты:</p>
+                        <ul>
+                            <li>Банковская карта</li>
+                            <li>Электронный платеж</li>
+                            <li>Счет на организацию</li>
+                        </ul>
+                        <p class="text-muted">Оплата производится через защищенное соединение.</p>
+                        
+                        <hr>
+                        
+                        <h6>Возникли вопросы?</h6>
+                        <p>Свяжитесь с нами:</p>
+                        <p><i class="bi bi-envelope"></i> orders@science-journal.ru<br>
+                        <i class="bi bi-telephone"></i> +7 (495) 123-45-67</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-4 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Научный журнал</h5>
+                    <p>© 2025 Все права защищены</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get elements
+            const cartItemsContainer = document.getElementById('cartItemsContainer');
+            const cartItemsList = document.getElementById('cartItemsList');
+            const emptyCartMessage = document.getElementById('emptyCartMessage');
+            const orderSummary = document.getElementById('orderSummary');
+            const totalItemsEl = document.getElementById('totalItems');
+            const subtotalEl = document.getElementById('subtotal');
+            const totalPriceEl = document.getElementById('totalPrice');
+            const clearCartBtn = document.getElementById('clearCartBtn');
+            
+            // Load cart from localStorage
+            function loadCart() {
+                const cart = JSON.parse(localStorage.getItem('cart')) || [];
+                
+                if (cart.length === 0) {
+                    // Show empty cart message
+                    emptyCartMessage.style.display = 'block';
+                    cartItemsList.style.display = 'none';
+                    orderSummary.style.display = 'none';
+                } else {
+                    // Hide empty cart message and show cart items
+                    emptyCartMessage.style.display = 'none';
+                    cartItemsList.style.display = 'block';
+                    orderSummary.style.display = 'block';
+                    
+                    // Clear existing items
+                    cartItemsContainer.innerHTML = '';
+                    
+                    // Calculate totals
+                    let totalItems = 0;
+                    let subtotal = 0;
+                    
+                    // Add items to the list
+                    cart.forEach((item, index) => {
+                        const itemTotal = item.price * item.quantity;
+                        subtotal += itemTotal;
+                        totalItems += item.quantity;
+                        
+                        const itemElement = document.createElement('li');
+                        itemElement.className = 'list-group-item px-0';
+                        itemElement.innerHTML = `
+                            <div class="row align-items-center">
+                                <div class="col-2 col-md-1">
+                                    <img src="${item.image}" class="img-fluid rounded" alt="${item.title}">
+                                </div>
+                                <div class="col-10 col-md-6">
+                                    <h6 class="mb-0">${item.title}</h6>
+                                    <p class="text-muted small mb-0">Цена: ${item.price} ₽</p>
+                                </div>
+                                <div class="col-6 col-md-3 mt-3 mt-md-0">
+                                    <div class="input-group input-group-sm">
+                                        <button class="btn btn-outline-secondary decrease-btn" data-index="${index}">-</button>
+                                        <input type="text" class="form-control text-center" value="${item.quantity}" readonly>
+                                        <button class="btn btn-outline-secondary increase-btn" data-index="${index}">+</button>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-1 text-end mt-3 mt-md-0">
+                                    <span class="fw-bold">${itemTotal} ₽</span>
+                                </div>
+                                <div class="col-2 col-md-1 text-end mt-3 mt-md-0">
+                                    <button class="btn btn-sm btn-outline-danger remove-btn" data-index="${index}">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        cartItemsContainer.appendChild(itemElement);
+                    });
+                    
+                    // Update totals
+                    totalItemsEl.textContent = totalItems;
+                    subtotalEl.textContent = `${subtotal} ₽`;
+                    totalPriceEl.textContent = `${subtotal} ₽`;
+                    
+                    // Add event listeners for buttons
+                    addButtonListeners();
+                }
+                
+                // Update cart counter
+                updateCartCounter();
+            }
+            
+            // Add event listeners to buttons
+            function addButtonListeners() {
+                // Remove item buttons
+                document.querySelectorAll('.remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        removeFromCart(index);
+                    });
+                });
+                
+                // Decrease quantity buttons
+                document.querySelectorAll('.decrease-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        updateQuantity(index, -1);
+                    });
+                });
+                
+                // Increase quantity buttons
+                document.querySelectorAll('.increase-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        updateQuantity(index, 1);
+                    });
+                });
+            }
+            
+            // Update item quantity
+            function updateQuantity(index, change) {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                
+                if (cart[index]) {
+                    cart[index].quantity += change;
+                    
+                    // Remove item if quantity is 0 or less
+                    if (cart[index].quantity <= 0) {
+                        cart.splice(index, 1);
+                    }
+                    
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    loadCart();
+                }
+            }
+            
+            // Remove item from cart
+            function removeFromCart(index) {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                
+                if (cart[index]) {
+                    cart.splice(index, 1);
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    loadCart();
+                }
+            }
+            
+            // Clear cart
+            if (clearCartBtn) {
+                clearCartBtn.addEventListener('click', function() {
+                    if (confirm('Вы уверены, что хотите очистить корзину?')) {
+                        localStorage.setItem('cart', JSON.stringify([]));
+                        loadCart();
+                    }
+                });
+            }
+            
+            // Initial load
+            loadCart();
+        });
+    </script>
+</body>
+</html> 

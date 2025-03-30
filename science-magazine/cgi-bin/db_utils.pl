@@ -557,6 +557,395 @@ sub create_submission {
     return $submission_id;
 }
 
+# Функция для получения всех пользователей
+sub get_all_users {
+    my %users;
+    tie %users, 'DB_File', $USERS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $USERS_DB: $!";
+    
+    my @result;
+    foreach my $id (keys %users) {
+        my @data = split(/\|/, decode_utf8($users{$id}));
+        push @result, {
+            id => $id,
+            login => $data[0],
+            password => $data[1],
+            fullname => $data[2],
+            email => $data[3],
+            phone => $data[4],
+            address => $data[5],
+            role => $data[6],
+            registration_date => $data[7]
+        };
+    }
+    
+    untie %users;
+    return @result;
+}
+
+# Функция для создания нового выпуска
+sub create_issue {
+    my ($number, $year, $month, $title, $description, $cover, $status, $publication_date) = @_;
+    
+    my %issues;
+    tie %issues, 'DB_File', $ISSUES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ISSUES_DB: $!";
+    
+    my $issue_id = get_next_id($ISSUES_DB);
+    my $issue_data = encode_utf8(join("|", 
+        $number,
+        $year,
+        $month,
+        $title,
+        $description,
+        $cover,
+        $status,
+        $publication_date
+    ));
+    
+    $issues{$issue_id} = $issue_data;
+    untie %issues;
+    
+    return $issue_id;
+}
+
+# Функция для обновления выпуска
+sub update_issue {
+    my ($id, $number, $year, $month, $title, $description, $cover, $status, $publication_date) = @_;
+    
+    my %issues;
+    tie %issues, 'DB_File', $ISSUES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ISSUES_DB: $!";
+    
+    if (exists $issues{$id}) {
+        my $issue_data = encode_utf8(join("|", 
+            $number,
+            $year,
+            $month,
+            $title,
+            $description,
+            $cover,
+            $status,
+            $publication_date
+        ));
+        
+        $issues{$id} = $issue_data;
+    }
+    
+    untie %issues;
+    return 1;
+}
+
+# Функция для удаления выпуска
+sub delete_issue {
+    my ($id) = @_;
+    
+    my %issues;
+    tie %issues, 'DB_File', $ISSUES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ISSUES_DB: $!";
+    
+    delete $issues{$id} if exists $issues{$id};
+    
+    untie %issues;
+    return 1;
+}
+
+# Функция для получения всех статей
+sub get_all_articles {
+    my %articles;
+    tie %articles, 'DB_File', $ARTICLES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ARTICLES_DB: $!";
+    
+    my @result;
+    foreach my $id (keys %articles) {
+        my @data = split(/\|/, decode_utf8($articles{$id}));
+        push @result, {
+            id => $id,
+            issue_id => $data[0],
+            title => $data[1],
+            authors => $data[2],
+            abstract => $data[3],
+            content => $data[4],
+            price => $data[5],
+            status => $data[6],
+            publication_date => $data[7]
+        };
+    }
+    
+    untie %articles;
+    return @result;
+}
+
+# Функция для создания статьи
+sub create_article {
+    my ($issue_id, $title, $authors, $abstract, $content, $price, $status, $publication_date) = @_;
+    
+    my %articles;
+    tie %articles, 'DB_File', $ARTICLES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ARTICLES_DB: $!";
+    
+    my $article_id = get_next_id($ARTICLES_DB);
+    my $article_data = encode_utf8(join("|", 
+        $issue_id,
+        $title,
+        $authors,
+        $abstract,
+        $content,
+        $price,
+        $status,
+        $publication_date
+    ));
+    
+    $articles{$article_id} = $article_data;
+    untie %articles;
+    
+    return $article_id;
+}
+
+# Функция для обновления статьи
+sub update_article {
+    my ($id, $issue_id, $title, $authors, $abstract, $content, $price, $status, $publication_date) = @_;
+    
+    my %articles;
+    tie %articles, 'DB_File', $ARTICLES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ARTICLES_DB: $!";
+    
+    if (exists $articles{$id}) {
+        my $article_data = encode_utf8(join("|", 
+            $issue_id,
+            $title,
+            $authors,
+            $abstract,
+            $content,
+            $price,
+            $status,
+            $publication_date
+        ));
+        
+        $articles{$id} = $article_data;
+    }
+    
+    untie %articles;
+    return 1;
+}
+
+# Функция для удаления статьи
+sub delete_article {
+    my ($id) = @_;
+    
+    my %articles;
+    tie %articles, 'DB_File', $ARTICLES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ARTICLES_DB: $!";
+    
+    delete $articles{$id} if exists $articles{$id};
+    
+    untie %articles;
+    return 1;
+}
+
+# Функция для получения всех заказов
+sub get_all_orders {
+    my %orders;
+    tie %orders, 'DB_File', $ORDERS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ORDERS_DB: $!";
+    
+    my @result;
+    foreach my $id (keys %orders) {
+        my @data = split(/\|/, decode_utf8($orders{$id}));
+        push @result, {
+            id => $id,
+            user_id => $data[0],
+            total => $data[1],
+            status => $data[2],
+            payment_method => $data[3],
+            receipt_number => $data[4],
+            date => $data[5]
+        };
+    }
+    
+    untie %orders;
+    return @result;
+}
+
+# Функция для получения заказа по ID
+sub get_order_by_id {
+    my ($id) = @_;
+    
+    my %orders;
+    tie %orders, 'DB_File', $ORDERS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ORDERS_DB: $!";
+    
+    my $order;
+    if (exists $orders{$id}) {
+        my @data = split(/\|/, decode_utf8($orders{$id}));
+        $order = {
+            id => $id,
+            user_id => $data[0],
+            total => $data[1],
+            status => $data[2],
+            payment_method => $data[3],
+            receipt_number => $data[4],
+            date => $data[5]
+        };
+    }
+    
+    untie %orders;
+    return $order;
+}
+
+# Функция для обновления статуса заказа
+sub update_order_status {
+    my ($id, $status) = @_;
+    
+    my %orders;
+    tie %orders, 'DB_File', $ORDERS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ORDERS_DB: $!";
+    
+    if (exists $orders{$id}) {
+        my @data = split(/\|/, decode_utf8($orders{$id}));
+        $data[2] = $status;
+        
+        $orders{$id} = encode_utf8(join("|", @data));
+    }
+    
+    untie %orders;
+    return 1;
+}
+
+# Функция для получения деталей заказа
+sub get_order_details {
+    my ($order_id) = @_;
+    
+    my %order_details;
+    tie %order_details, 'DB_File', $ORDER_DETAILS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ORDER_DETAILS_DB: $!";
+    
+    my @result;
+    foreach my $id (keys %order_details) {
+        my @data = split(/\|/, decode_utf8($order_details{$id}));
+        if ($data[0] eq $order_id) {
+            push @result, {
+                id => $id,
+                order_id => $data[0],
+                article_id => $data[1],
+                quantity => $data[2],
+                price => $data[3]
+            };
+        }
+    }
+    
+    untie %order_details;
+    return @result;
+}
+
+# Function to edit user
+sub edit_user {
+    my ($id, $login, $password, $full_name, $email, $phone, $address, $role) = @_;
+    
+    my %users;
+    tie %users, 'DB_File', $USERS_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $USERS_DB: $!";
+    
+    if (exists $users{$id}) {
+        # Get existing user data to preserve password if not changing it
+        my @existing_data = split(/\|/, decode_utf8($users{$id}));
+        
+        # Use existing password if new one not provided
+        my $password_hash = $password ? md5_hex($password) : $existing_data[1];
+        
+        my $user_data = encode_utf8(join("|",
+            $login,
+            $password_hash,
+            $full_name,
+            $email,
+            $phone || $existing_data[4],
+            $address || $existing_data[5],
+            $role,
+            $existing_data[7] # preserve registration date
+        ));
+        
+        $users{$id} = $user_data;
+    }
+    
+    untie %users;
+    return 1;
+}
+
+# Function to edit article
+sub edit_article {
+    my ($id, $issue_id, $title, $authors, $abstract, $content, $price, $status) = @_;
+    
+    my %articles;
+    tie %articles, 'DB_File', $ARTICLES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ARTICLES_DB: $!";
+    
+    if (exists $articles{$id}) {
+        my @existing_data = split(/\|/, decode_utf8($articles{$id}));
+        
+        my $article_data = encode_utf8(join("|",
+            $issue_id,
+            $title,
+            $authors,
+            $abstract,
+            $content,
+            $price,
+            $status,
+            $existing_data[7] # preserve original publication date
+        ));
+        
+        $articles{$id} = $article_data;
+    }
+    
+    untie %articles;
+    return 1;
+}
+
+# Fix the save_issue function to properly save changes
+sub save_issue {
+    my ($id, $number, $year, $month, $title, $description, $cover, $status) = @_;
+    
+    my %issues;
+    tie %issues, 'DB_File', $ISSUES_DB, O_RDWR, 0666, $DB_HASH
+        or die "Не удалось открыть $ISSUES_DB: $!";
+    
+    # If ID exists, update existing issue
+    if ($id && exists $issues{$id}) {
+        my @existing_data = split(/\|/, decode_utf8($issues{$id}));
+        
+        my $issue_data = encode_utf8(join("|",
+            $number,
+            $year,
+            $month,
+            $title,
+            $description,
+            $cover || $existing_data[5], # preserve existing cover if not provided
+            $status,
+            $existing_data[7] # preserve original publication date
+        ));
+        
+        $issues{$id} = $issue_data;
+    }
+    # If no ID or doesn't exist, create new issue
+    else {
+        $id = get_next_id($ISSUES_DB) unless $id;
+        my $issue_data = encode_utf8(join("|",
+            $number,
+            $year,
+            $month,
+            $title,
+            $description,
+            $cover || "/images/issue-cover-placeholder.jpg",
+            $status,
+            strftime("%Y-%m-%d", localtime)
+        ));
+        
+        $issues{$id} = $issue_data;
+    }
+    
+    untie %issues;
+    return $id;
+}
+
 # Экспортируем функции
 sub import {
     my $pkg = shift;

@@ -80,7 +80,8 @@
                 <a href="/cgi-bin/submissions.pl">Подать статью</a>
                 <a href="/about.html">О журнале</a>
                 <a href="/cgi-bin/cart.pl">Корзина <span id="cart-counter" style="display: none;">0</span></a>
-                <a href="/cgi-bin/auth.pl">Вход</a>
+                <span id="admin-link-container"></span>
+                <a href="/cgi-bin/auth.pl" id="auth-link">Вход</a>
             </nav>
         </div>
     </header>
@@ -173,5 +174,41 @@
     </footer>
     
     <script src="/js/main.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', checkUserRole);
+    </script>
+    <script>
+        // Check if user is logged in and get their role
+        function checkUserRole() {
+            // Get the session cookie
+            const cookies = document.cookie.split(';');
+            let sessionCookie = '';
+            
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith('session=')) {
+                    sessionCookie = cookie.substring('session='.length);
+                    break;
+                }
+            }
+            
+            if (sessionCookie) {
+                const [userId, userRole] = sessionCookie.split(':');
+                
+                // If user is admin or editor, show the admin panel link
+                if (userRole === 'admin' || userRole === 'editor') {
+                    document.getElementById('admin-link-container').innerHTML = 
+                        '<a href="/cgi-bin/admin.pl">Панель администратора</a>';
+                }
+                
+                // Change the auth link to personal profile
+                document.getElementById('auth-link').textContent = 'Личный кабинет';
+                document.getElementById('auth-link').href = '/cgi-bin/auth.pl?action=profile';
+            }
+        }
+        
+        // Run when the page loads
+        window.addEventListener('DOMContentLoaded', checkUserRole);
+    </script>
 </body>
 </html> 

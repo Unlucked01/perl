@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0;url=/cgi-bin/issues.pl">
+    <title>Перенаправление | Научный журнал</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            text-align: center;
+        }
+        .loading {
+            margin-bottom: 20px;
+        }
+        .message {
+            max-width: 80%;
+        }
+        .link {
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        // Extract the issue ID from URL and redirect to the correct CGI script
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const issueId = urlParams.get('id');
+            
+            if (issueId) {
+                // Redirect to the issue.pl with the correct ID
+                window.location.href = '/cgi-bin/issue.pl?id=' + issueId;
+            } else {
+                // If no ID is provided, redirect to the issues list
+                window.location.href = '/cgi-bin/issues.pl';
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="loading">
+        <img src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/icons/arrow-clockwise.svg" alt="Loading" style="width: 48px; height: 48px;">
+    </div>
+    <div class="message">
+        <h2>Перенаправление...</h2>
+        <p>Вы будете автоматически перенаправлены.</p>
+    </div>
+    <div class="link">
+        <p>Если перенаправление не происходит, <a href="/cgi-bin/issues.pl">перейдите к списку выпусков</a>.</p>
+    </div>
+</body>
+</html> 
