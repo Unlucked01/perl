@@ -4,7 +4,6 @@ use warnings;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
-use Digest::SHA qw(sha256_hex);
 
 my $cgi = CGI->new;
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
@@ -195,24 +194,38 @@ sub process_login {
     tie %users, 'DB_File', $db_path, O_RDONLY, 0644, $DB_HASH or display_form("Ошибка базы данных: $!");
     
     if (exists $users{$email}) {
-        my ($stored_password, $name, $role) = split(':::', $users{$email});
+        my ($stored_password, $name, $first_name, $last_name, $role) = split(':::', $users{$email});
         
-        if ($stored_password eq sha256_hex($password)) {
+        if ($stored_password eq $password) {
             # Password is correct, create session
             my $session_id = create_session($email, $role);
             
-            # Set cookie
-            my $cookie = $cgi->cookie(
-                -name => 'session',
-                -value => $session_id,
-                -expires => '+1d',
-                -path => '/'
-            );
-            
-            print $cgi->redirect(
-                -uri => '/cgi-bin/profile.pl',
-                -cookie => $cookie
-            );
+            # Set cookie and redirect using HTML
+            print <<HTML;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Перенаправление...</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+    </style>
+</head>
+<body>
+    <h2>Перенаправление...</h2>
+    <p>Пожалуйста, подождите, пока мы перенаправим вас на страницу профиля.</p>
+    <script>
+        // Set the cookie
+        document.cookie = "session=$session_id; path=/; expires=" + new Date(Date.now() + 86400000).toUTCString();
+        
+        // Redirect after a short delay
+        setTimeout(function() {
+            window.location.replace("/cgi-bin/profile.pl");
+        }, 1000);
+    </script>
+</body>
+</html>
+HTML
             
             untie %users;
             return;
@@ -257,11 +270,11 @@ sub process_registration {
         return;
     }
     
-    # Hash the password
-    my $hashed_password = sha256_hex($password);
+    # Store user data with plain text password
+    my ($first_name, $last_name) = split(' ', $name, 2);
+    $last_name ||= '';  # Handle case where there's no last name
     
-    # Store user data (password, name, role)
-    $users{$email} = "$hashed_password:::$name:::customer";
+    $users{$email} = join(":::", $password, $name, $first_name, $last_name, "customer");
     
     untie %users;
     
@@ -272,14 +285,23 @@ sub process_registration {
 sub create_session {
     my ($email, $role) = @_;
     
-    my $session_id = sha256_hex(time() . rand() . $email);
+    # Generate a simple session ID without hashing
+    my $session_id = time() . rand() . $email;
+    $session_id =~ s/[^a-zA-Z0-9]//g; # Remove non-alphanumeric characters
     
     my %sessions;
-    tie %sessions, 'DB_File', $sessions_path, O_CREAT|O_RDWR, 0644, $DB_HASH or display_form("Ошибка базы данных сессий: $!");
+    tie %sessions, 'DB_File', $sessions_path, O_CREAT|O_RDWR, 0644, $DB_HASH or die "Cannot open sessions database: $!";
     
     # Store session data
     my $expiry = time() + 86400; # 24 hours
-    $sessions{$session_id} = "$email:::$role:::$expiry";
+    my $session_data = join(":::", $email, $role, $expiry);
+    $sessions{$session_id} = $session_data;
+    
+    # Debug output
+    print "Content-Type: text/plain\n\n";
+    print "Session stored in database:\n";
+    print "ID: $session_id\n";
+    print "Data: $session_data\n";
     
     untie %sessions;
     

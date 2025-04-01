@@ -4,6 +4,7 @@ use warnings;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
+use Encode;
 
 my $cgi = CGI->new;
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
@@ -14,8 +15,7 @@ my $issues_path = "$data_dir/issues.db";
 
 # Check if database exists, if not, show initialization message
 unless (-e $issues_path) {
-    print <<HTML;
-<!DOCTYPE html>
+    print qq{<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -36,8 +36,7 @@ unless (-e $issues_path) {
         </div>
     </div>
 </body>
-</html>
-HTML
+</html>};
     exit;
 }
 
@@ -103,8 +102,7 @@ foreach my $issue (@issues_data) {
 my @unique_years = sort { $b <=> $a } keys %years;
 
 # Generate HTML page
-print <<HTML;
-<!DOCTYPE html>
+print qq{<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -179,16 +177,14 @@ print <<HTML;
                                         Год
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="/cgi-bin/issues.pl?year=all">Все годы</a></li>
-HTML
+                                        <li><a class="dropdown-item" href="/cgi-bin/issues.pl?year=all">Все годы</a></li>};
 
 # Add years to the dropdown
 foreach my $year (@unique_years) {
     print qq(<li><a class="dropdown-item" href="/cgi-bin/issues.pl?year=$year">$year</a></li>\n);
 }
 
-print <<HTML;
-                                    </ul>
+print qq{                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -200,8 +196,7 @@ print <<HTML;
         <div class="row">
             <!-- List of issues -->
             <div class="col-12">
-                <div class="row">
-HTML
+                <div class="row">};
 
 # Display issues
 if (@issues_data) {
@@ -216,8 +211,7 @@ if (@issues_data) {
         my @articles = split(',', $issue->{articles});
         my $articles_count = scalar @articles;
         
-        print <<ISSUE;
-                    <div class="col-md-4 mb-4">
+        print qq{                    <div class="col-md-4 mb-4">
                         <div class="card h-100">
                             <img src="https://placehold.co/600x400/e5e5e5/636363?text=Выпуск+$issue_id" class="card-img-top" alt="$issue_title">
                             <div class="card-body">
@@ -234,22 +228,18 @@ if (@issues_data) {
                                 <button class="btn btn-sm btn-primary add-to-cart-btn" data-id="$issue_id" data-title="$issue_number" data-price="$issue_price">В корзину</button>
                             </div>
                         </div>
-                    </div>
-ISSUE
+                    </div>};
     }
 } else {
-    print <<NORESULTS;
-                    <div class="col-12">
+    print qq{                    <div class="col-12">
                         <div class="alert alert-info">
                             <h4 class="alert-heading">Выпуски не найдены</h4>
                             <p>По вашему запросу не найдено выпусков журнала. Попробуйте изменить параметры поиска.</p>
                         </div>
-                    </div>
-NORESULTS
+                    </div>};
 }
 
-print <<HTML;
-                </div>
+print qq{                </div>
                 
                 <!-- Pagination -->
                 <nav aria-label="Навигация по страницам" class="mt-4">
@@ -301,5 +291,4 @@ print <<HTML;
         });
     </script>
 </body>
-</html>
-HTML 
+</html>}; 

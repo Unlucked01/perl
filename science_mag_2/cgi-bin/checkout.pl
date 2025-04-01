@@ -6,7 +6,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
 
 my $cgi = CGI->new;
-print $cgi->header('text/html');
+print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Define paths
 my $db_path = "/usr/local/apache2/data/users.db";
@@ -365,27 +365,25 @@ HTML
                     let totalItems = 0;
                     let subtotal = 0;
                     
-                    cart.forEach(item => {
-                        const itemTotal = item.price * item.quantity;
+                    cart.forEach(function(item) {
+                        var itemTotal = item.price * item.quantity;
                         subtotal += itemTotal;
                         totalItems += item.quantity;
                         
-                        html += `
-                            <li class="list-group-item px-0">
-                                <div class="row align-items-center">
-                                    <div class="col-2">
-                                        <img src="${item.image}" class="img-fluid rounded" alt="${item.title}">
-                                    </div>
-                                    <div class="col-7">
-                                        <h6 class="mb-0">${item.title}</h6>
-                                        <small class="text-muted">Количество: ${item.quantity}</small>
-                                    </div>
-                                    <div class="col-3 text-end">
-                                        <span class="fw-bold">${itemTotal} ₽</span>
-                                    </div>
-                                </div>
-                            </li>
-                        `;
+                        html += '<li class="list-group-item px-0">' +
+                            '<div class="row align-items-center">' +
+                            '<div class="col-2">' +
+                            '<img src="' + item.image + '" class="img-fluid rounded" alt="' + item.title + '">' +
+                            '</div>' +
+                            '<div class="col-7">' +
+                            '<h6 class="mb-0">' + item.title + '</h6>' +
+                            '<small class="text-muted">Количество: ' + item.quantity + '</small>' +
+                            '</div>' +
+                            '<div class="col-3 text-end">' +
+                            '<span class="fw-bold">' + itemTotal + ' ₽</span>' +
+                            '</div>' +
+                            '</div>' +
+                            '</li>';
                     });
                     
                     html += '</ul>';
@@ -419,6 +417,18 @@ HTML
                 }
                 
                 if (valid) {
+                    // Format cart data as title|price|quantity,title|price|quantity,...
+                    const cartData = cart.map(item => 
+                        item.title + '|' + item.price + '|' + item.quantity
+                    ).join(',');
+                    
+                    // Add cart data to form
+                    const cartDataInput = document.createElement('input');
+                    cartDataInput.type = 'hidden';
+                    cartDataInput.name = 'cart_data';
+                    cartDataInput.value = cartData;
+                    this.appendChild(cartDataInput);
+                    
                     // Submit form
                     this.submit();
                 }
@@ -432,6 +442,33 @@ HTML
 
 # Function to process order
 sub process_order {
+    # Get cart data from POST parameters
+    my $cart_data = $cgi->param('cart_data');
+    
+    # Parse cart data manually (simple format: title|price|quantity,title|price|quantity,...)
+    my @items = split(',', $cart_data);
+    my $total_amount = 0;
+    
+    foreach my $item (@items) {
+        my ($title, $price, $quantity) = split('\|', $item);
+        $total_amount += $price * $quantity;
+    }
+    
+    # Generate order ID
+    my $order_id = "ORD-" . sprintf("%03d", int(rand(1000)));
+    
+    # Store order in database
+    my %orders;
+    if (tie %orders, 'DB_File', $orders_path, O_CREAT|O_RDWR, 0644, $DB_HASH) {
+        my $order_data = join(":::", 
+            $user_email,
+            scalar(localtime()),
+            $total_amount,
+            "Оплачен"
+        );
+        $orders{$order_id} = $order_data;
+        untie %orders;
+    }
     
     print <<HTML;
 <!DOCTYPE html>

@@ -6,20 +6,37 @@ use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
 
 my $cgi = CGI->new;
-print $cgi->header('text/html');
+print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Define paths
 my $db_path = "/usr/local/apache2/data/users.db";
 my $sessions_path = "/usr/local/apache2/data/sessions.db";
 my $orders_path = "/usr/local/apache2/data/orders.db";
+my $articles_path = "/usr/local/apache2/data/articles.db";
 
 # Check if user is logged in
 my $session_cookie = $cgi->cookie('session') || '';
 my ($user_email, $user_name, $user_role) = check_session($session_cookie);
 
 if (!$user_email) {
-    # Not logged in, redirect to login page
-    print $cgi->redirect('/cgi-bin/login.pl');
+    # Not logged in, use HTML/JS redirect instead of CGI redirect
+    print $cgi->header();
+    print <<HTML;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Перенаправление...</title>
+    <meta http-equiv="refresh" content="0;url=/cgi-bin/login.pl">
+    <script>
+        window.location.href = "/cgi-bin/login.pl";
+    </script>
+</head>
+<body>
+    <p>Если вы не были автоматически перенаправлены, <a href="/cgi-bin/login.pl">нажмите здесь</a>.</p>
+</body>
+</html>
+HTML
     exit;
 }
 
@@ -44,6 +61,7 @@ sub check_session {
         return ('', '', '');
     }
     
+    # Get session data from database
     my %sessions;
     if (tie %sessions, 'DB_File', $sessions_path, O_RDONLY, 0644, $DB_HASH) {
         if (exists $sessions{$session_id}) {
@@ -51,14 +69,16 @@ sub check_session {
             
             # Check if session is expired
             if ($expiry > time()) {
-                # Get user name
+                # Get user data from users database
                 my %users;
                 if (tie %users, 'DB_File', $db_path, O_RDONLY, 0644, $DB_HASH) {
-                    my ($password, $name, $stored_role) = split(':::', $users{$email});
+                    if (exists $users{$email}) {
+                        my ($password, $name, $first_name, $last_name, $stored_role) = split(':::', $users{$email});
+                        untie %users;
+                        untie %sessions;
+                        return ($email, $name, $role);
+                    }
                     untie %users;
-                    
-                    untie %sessions;
-                    return ($email, $name, $role);
                 }
             }
         }
@@ -68,11 +88,68 @@ sub check_session {
     return ('', '', '');
 }
 
+# Function to get user orders
+sub get_user_orders {
+    my $email = shift;
+    my @orders;
+    
+    # Check if orders database exists
+    if (-e $orders_path) {
+        my %orders_db;
+        if (tie %orders_db, 'DB_File', $orders_path, O_RDONLY, 0644, $DB_HASH) {
+            # Query orders by user email from database
+            foreach my $order_id (keys %orders_db) {
+                my ($user_email, $date, $amount, $status) = split(':::', $orders_db{$order_id});
+                
+                # Only add orders for the current user
+                if ($user_email eq $email) {
+                    push @orders, [$order_id, $date, $amount, $status];
+                }
+            }
+            
+            untie %orders_db;
+        }
+    }
+    
+    return @orders;
+}
+
+# Function to get user articles
+sub get_user_articles {
+    my $email = shift;
+    my @articles;
+    
+    # Check if articles database exists
+    if (-e $articles_path) {
+        my %articles_db;
+        if (tie %articles_db, 'DB_File', $articles_path, O_RDONLY, 0644, $DB_HASH) {
+            # For now, we'll just associate articles with users based on a simple match in the authors field
+            # In a real system, there would be a proper relation table for this
+            foreach my $article_id (keys %articles_db) {
+                my ($title, $authors, $date, $status, $abstract) = split(':::', $articles_db{$article_id});
+                
+                # Simple check - if the user's email is in the authors field
+                # Or if the user's name is in the authors field (simplified approach)
+                if ($authors =~ /$user_email/i || $authors =~ /$user_name/i) {
+                    push @articles, [$article_id, $title, $authors, $date, $status];
+                }
+            }
+            
+            untie %articles_db;
+        }
+    }
+    
+    return @articles;
+}
+
 # Function to display profile
 sub display_profile {
     # Get user orders
     my @orders = get_user_orders($user_email);
     
+    # Get user articles
+    my @articles = get_user_articles($user_email);
+
     print <<HTML;
 <!DOCTYPE html>
 <html lang="ru">
@@ -168,16 +245,7 @@ HTML
                         <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="list">Профиль</a>
                         <a href="#orders" class="list-group-item list-group-item-action" data-bs-toggle="list">История заказов</a>
                         <a href="#password" class="list-group-item list-group-item-action" data-bs-toggle="list">Сменить пароль</a>
-HTML
-
-    # Show article submission link if user is editor
-    if ($user_role eq 'editor') {
-        print <<HTML;
-                        <a href="#articles" class="list-group-item list-group-item-action" data-bs-toggle="list">Прием статей</a>
-HTML
-    }
-
-    print <<HTML;
+                        <a href="#articles" class="list-group-item list-group-item-action" data-bs-toggle="list">Мои статьи</a>
                     </div>
                 </div>
             </div>
@@ -291,56 +359,76 @@ HTML
                             </div>
                         </div>
                     </div>
-HTML
-
-    # Show article submission panel if user is editor
-    if ($user_role eq 'editor') {
-        print <<HTML;
                     <div class="tab-pane fade" id="articles">
                         <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Прием статей</h5>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Мои статьи</h5>
+                                <a href="/cgi-bin/submit_article.pl" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Отправить новую статью
+                                </a>
                             </div>
                             <div class="card-body">
+HTML
+
+    if (@articles) {
+        print <<HTML;
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Название</th>
+                                                <th>Авторы</th>
+                                                <th>Дата</th>
+                                                <th>Статус</th>
+                                                <th>Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+HTML
+
+        foreach my $article (@articles) {
+            my ($article_id, $title, $authors, $date, $status) = @$article;
+            my $status_class = "primary";
+            
+            if ($status eq "Принята") {
+                $status_class = "success";
+            } elsif ($status eq "Отклонена") {
+                $status_class = "danger";
+            } elsif ($status eq "На рассмотрении") {
+                $status_class = "warning";
+            }
+            
+            print <<HTML;
+                                            <tr>
+                                                <td>$title</td>
+                                                <td>$authors</td>
+                                                <td>$date</td>
+                                                <td><span class="badge bg-$status_class">$status</span></td>
+                                                <td>
+                                                    <a href="/cgi-bin/view_article.pl?id=$article_id" class="btn btn-sm btn-outline-primary">Просмотр</a>
+                                                </td>
+                                            </tr>
+HTML
+        }
+
+        print <<HTML;
+                                        </tbody>
+                                    </table>
+                                </div>
+HTML
+    } else {
+        print <<HTML;
+                                <p>У вас пока нет отправленных статей.</p>
                                 <div class="alert alert-info">
-                                    Здесь вы можете управлять статьями, отправленными на рассмотрение.
+                                    <p class="mb-0">Чтобы отправить новую статью на рассмотрение, нажмите кнопку "Отправить новую статью".</p>
                                 </div>
-                                
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
-                                    <a href="/cgi-bin/articles.pl?action=new" class="btn btn-primary">
-                                        <i class="bi bi-plus-circle"></i> Добавить новую статью
-                                    </a>
-                                    <a href="/cgi-bin/articles.pl?action=list" class="btn btn-outline-primary">
-                                        <i class="bi bi-list-ul"></i> Список статей
-                                    </a>
-                                </div>
-                                
-                                <h6>Недавние статьи на рассмотрении</h6>
-                                <div class="list-group">
-                                    <a href="#" class="list-group-item list-group-item-action">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">Современные подходы к анализу данных</h5>
-                                            <small class="text-muted">01.10.2023</small>
-                                        </div>
-                                        <p class="mb-1">Авторы: Петров А.В., Сидоров С.М.</p>
-                                        <small><span class="badge bg-warning">На рассмотрении</span></small>
-                                    </a>
-                                    <a href="#" class="list-group-item list-group-item-action">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">Новые методы в квантовых вычислениях</h5>
-                                            <small class="text-muted">25.09.2023</small>
-                                        </div>
-                                        <p class="mb-1">Авторы: Иванов И.И.</p>
-                                        <small><span class="badge bg-success">Принята</span></small>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 HTML
     }
 
     print <<HTML;
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -351,7 +439,7 @@ HTML
             <div class="row">
                 <div class="col-md-6">
                     <h5>Научный журнал</h5>
-                    <p>© 2023 Все права защищены</p>
+                    <p>© 2025 Все права защищены</p>
                 </div>
             </div>
         </div>
@@ -393,32 +481,6 @@ HTML
 HTML
 }
 
-# Function to get user orders
-sub get_user_orders {
-    my $email = shift;
-    my @orders;
-    
-    # Check if orders database exists
-    if (-e $orders_path) {
-        my %orders_db;
-        if (tie %orders_db, 'DB_File', $orders_path, O_RDONLY, 0644, $DB_HASH) {
-            # Query orders by user email from database
-            foreach my $order_id (keys %orders_db) {
-                my ($user_email, $date, $amount, $status) = split(':::', $orders_db{$order_id});
-                
-                # Only add orders for the current user
-                if ($user_email eq $email) {
-                    push @orders, [$order_id, $date, $amount, $status];
-                }
-            }
-            
-            untie %orders_db;
-        }
-    }
-    
-    return @orders;
-}
-
 # Function to update profile
 sub update_profile {
     my $new_name = $cgi->param('name');
@@ -429,14 +491,18 @@ sub update_profile {
         return;
     }
     
-    # Update user data in the database
+    # Convert email to match the escaped format in the database
+    my $db_email = $user_email;
+    $db_email =~ s/@/\\@/g;
+    
+    # Update user name in database
     my %users;
     if (tie %users, 'DB_File', $db_path, O_RDWR, 0644, $DB_HASH) {
-        if (exists $users{$user_email}) {
-            my ($password, $name, $role) = split(':::', $users{$user_email});
+        if (exists $users{$db_email}) {
+            my ($password, $name, $role) = split(':::', $users{$db_email});
             
             # Update name
-            $users{$user_email} = "$password:::$new_name:::$role";
+            $users{$db_email} = "$password:::$new_name:::$role";
             
             # Update user_name for display
             $user_name = $new_name;
@@ -464,16 +530,20 @@ sub change_password {
         return;
     }
     
-    # Check current password and update
+    # Convert email to match the escaped format in the database
+    my $db_email = $user_email;
+    $db_email =~ s/@/\\@/g;
+    
+    # Update password in database
     my %users;
     if (tie %users, 'DB_File', $db_path, O_RDWR, 0644, $DB_HASH) {
-        if (exists $users{$user_email}) {
-            my ($stored_password, $name, $role) = split(':::', $users{$user_email});
+        if (exists $users{$db_email}) {
+            my ($stored_password, $name, $role) = split(':::', $users{$db_email});
             
-            # Verify current password (would use sha256_hex in real app)
+            # Verify current password as plaintext
             if ($stored_password eq $current_password) {
-                # Update password (would use sha256_hex in real app)
-                $users{$user_email} = "$new_password:::$name:::$role";
+                # Update password with new plaintext password
+                $users{$db_email} = "$new_password:::$name:::$role";
             }
         }
         untie %users;
@@ -501,9 +571,22 @@ sub logout {
         -path => '/'
     );
     
-    # Redirect to home page
-    print $cgi->redirect(
-        -uri => '/index.html',
-        -cookie => $cookie
-    );
+    # Use HTML/JS redirect instead of CGI redirect
+    print $cgi->header(-cookie => $cookie);
+    print <<HTML;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Выход...</title>
+    <meta http-equiv="refresh" content="0;url=/index.html">
+    <script>
+        window.location.href = "/index.html";
+    </script>
+</head>
+<body>
+    <p>Если вы не были автоматически перенаправлены, <a href="/index.html">нажмите здесь</a>.</p>
+</body>
+</html>
+HTML
 } 

@@ -235,9 +235,6 @@ print <<HTML;
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="authors-tab" data-bs-toggle="tab" data-bs-target="#authors" type="button" role="tab" aria-controls="authors" aria-selected="false">Авторы</button>
                             </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">Отзывы</button>
-                            </li>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -334,72 +331,6 @@ NO_AUTHORS
 }
 
 print <<HTML;
-                                </div>
-                            </div>
-                            <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
-                                <div class="mb-4">
-                                    <h5 class="mb-3">Отзывы о выпуске</h5>
-                                    <div class="card mb-3">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <div>
-                                                    <h6 class="mb-0">Александр К.</h6>
-                                                    <small class="text-muted">20.10.2023</small>
-                                                </div>
-                                                <div>
-                                                    <span class="text-warning">
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star"></i>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <p class="card-text">Отличный выпуск, особенно понравилась статья об этических аспектах ИИ. Очень актуальная тема.</p>
-                                        </div>
-                                    </div>
-                                    <div class="card mb-3">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <div>
-                                                    <h6 class="mb-0">Елена С.</h6>
-                                                    <small class="text-muted">18.10.2023</small>
-                                                </div>
-                                                <div>
-                                                    <span class="text-warning">
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <p class="card-text">Великолепный выпуск! Статьи написаны на высоком научном уровне и в то же время доступны для понимания.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h5>Оставить отзыв</h5>
-                                    <form class="card card-body">
-                                        <div class="mb-3">
-                                            <label for="reviewRating" class="form-label">Оценка</label>
-                                            <select class="form-select" id="reviewRating">
-                                                <option value="5">5 звезд</option>
-                                                <option value="4">4 звезды</option>
-                                                <option value="3">3 звезды</option>
-                                                <option value="2">2 звезды</option>
-                                                <option value="1">1 звезда</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="reviewText" class="form-label">Ваш отзыв</label>
-                                            <textarea class="form-control" id="reviewText" rows="3" required></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Отправить отзыв</button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
