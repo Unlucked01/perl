@@ -13,6 +13,7 @@ my $db_path = "$data_dir/users.db";
 my $orders_path = "$data_dir/orders.db";
 my $articles_path = "$data_dir/articles.db";
 my $issues_path = "$data_dir/issues.db";
+my $sessions_path = "$data_dir/sessions.db";
 
 # Create data directory if it doesn't exist
 print "Checking data directory $data_dir...\n";
@@ -38,18 +39,29 @@ if (!$users_result) {
 }
 
 # Add admin user
-$users{"admin\@example.com"} = join(":::", "admin123", "admin", "Admin", "User", "admin");
+$users{"admin\@example.com"} = join(":::", "admin123", "Admin", "admin");
 
 # Editor user (password: editor123)
-$users{'editor\@example.com'} = join(":::", "editor123", "Редактор", "Editor", "User", "editor");
+$users{'editor\@example.com'} = join(":::", "editor123", "Редактор", "editor");
 
 # Regular users (password: password123)
-$users{'user1\@example.com'} = join(":::", "password123", "Иванов Иван", "Ivan", "Ivanov", "customer");
-$users{'user2\@example.com'} = join(":::", "password123", "Петров Петр", "Petr", "Petrov", "customer");
-$users{'user3\@example.com'} = join(":::", "password123", "Сидорова Анна", "Anna", "Sidorova", "customer");
+$users{'user1\@example.com'} = join(":::", "password123", "Иванов Иван", "customer");
+$users{'user2\@example.com'} = join(":::", "password123", "Петров Петр", "customer");
+$users{'user3\@example.com'} = join(":::", "password123", "Сидорова Анна", "customer");
 
 untie %users;
 print "Users database initialized with 5 users\n";
+
+# Initialize sessions database
+print "Initializing sessions database...\n";
+my %sessions;
+my $sessions_result = tie %sessions, 'DB_File', $sessions_path, O_CREAT|O_RDWR, 0644, $DB_HASH;
+if (!$sessions_result) {
+    die "Cannot open sessions database '$sessions_path': $!\n";
+}
+# We don't need to add initial sessions
+untie %sessions;
+print "Sessions database initialized\n";
 
 # Initialize orders database
 print "Initializing orders database...\n";
@@ -81,7 +93,7 @@ if (!$articles_result) {
 $articles{'article-001'} = "Современные подходы к анализу данных:::Петров А.В., Сидоров С.М.:::01.10.2025:::На рассмотрении:::Данная статья представляет обзор современных методов анализа данных в научных исследованиях.";
 $articles{'article-002'} = "Новые методы в квантовых вычислениях:::Иванов И.И.:::25.09.2025:::Принята:::Работа посвящена инновационным подходам в области квантовых вычислений.";
 $articles{'article-003'} = "Исследование эффективности алгоритмов машинного обучения:::Смирнова Е.А.:::15.09.2025:::Принята:::В статье проводится сравнительный анализ эффективности различных алгоритмов машинного обучения.";
-$articles{'article-004'} = "Применение нейронных сетей в обработке естественного языка:::Козлов И.С.:::10.09.2025:::Отклонена:::Статья рассматривает методы использования нейронных сетей для задач обработки естественного языка.";
+$articles{'article-004'} = "Применение нейронных сетей в обработке естественного языка:::Студентов И.С.:::10.09.2025:::Отклонена:::Статья рассматривает методы использования нейронных сетей для задач обработки естественного языка.";
 $articles{'article-005'} = "Этические аспекты развития искусственного интеллекта:::Новикова М.П., Орлов К.Д.:::30.10.2025:::На рассмотрении:::Исследование посвящено этическим вопросам, возникающим при развитии систем ИИ.";
 
 untie %articles;

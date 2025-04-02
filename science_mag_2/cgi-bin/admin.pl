@@ -66,6 +66,7 @@ sub check_session {
         return ('', '', '');
     }
     
+    # Get session data from database
     my %sessions;
     if (tie %sessions, 'DB_File', $sessions_path, O_RDONLY, 0644, $DB_HASH) {
         if (exists $sessions{$session_id}) {
@@ -73,14 +74,16 @@ sub check_session {
             
             # Check if session is expired
             if ($expiry > time()) {
-                # Get user name
+                # Get user data from users database
                 my %users;
                 if (tie %users, 'DB_File', $db_path, O_RDONLY, 0644, $DB_HASH) {
-                    my ($password, $name, $stored_role) = split(':::', $users{$email});
+                    if (exists $users{$email}) {
+                        my ($password, $name, $role) = split(':::', $users{$email});
+                        untie %users;
+                        untie %sessions;
+                        return ($email, $name, $role);
+                    }
                     untie %users;
-                    
-                    untie %sessions;
-                    return ($email, $name, $role);
                 }
             }
         }
@@ -89,6 +92,7 @@ sub check_session {
     
     return ('', '', '');
 }
+
 
 # Function to display admin dashboard
 sub display_dashboard {

@@ -6,7 +6,6 @@ use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
 
 my $cgi = CGI->new;
-print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Define paths
 my $db_path = "/usr/local/apache2/data/users.db";
@@ -27,6 +26,9 @@ if ($action eq 'login') {
 sub display_form {
     my $error = shift || '';
     my $success = shift || '';
+    
+    # Only print the header when displaying the form
+    print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
     
     print <<HTML;
 <!DOCTYPE html>
@@ -200,32 +202,18 @@ sub process_login {
             # Password is correct, create session
             my $session_id = create_session($email, $role);
             
-            # Set cookie and redirect using HTML
-            print <<HTML;
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Перенаправление...</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-    </style>
-</head>
-<body>
-    <h2>Перенаправление...</h2>
-    <p>Пожалуйста, подождите, пока мы перенаправим вас на страницу профиля.</p>
-    <script>
-        // Set the cookie
-        document.cookie = "session=$session_id; path=/; expires=" + new Date(Date.now() + 86400000).toUTCString();
-        
-        // Redirect after a short delay
-        setTimeout(function() {
-            window.location.replace("/cgi-bin/profile.pl");
-        }, 1000);
-    </script>
-</body>
-</html>
-HTML
+            # Set cookie and redirect using HTTP headers
+            my $cookie = $cgi->cookie(
+                -name => 'session',
+                -value => $session_id,
+                -expires => '+1d',
+                -path => '/'
+            );
+            
+            print $cgi->redirect(
+                -uri => '/cgi-bin/profile.pl',
+                -cookie => $cookie
+            );
             
             untie %users;
             return;
@@ -296,12 +284,6 @@ sub create_session {
     my $expiry = time() + 86400; # 24 hours
     my $session_data = join(":::", $email, $role, $expiry);
     $sessions{$session_id} = $session_data;
-    
-    # Debug output
-    print "Content-Type: text/plain\n\n";
-    print "Session stored in database:\n";
-    print "ID: $session_id\n";
-    print "Data: $session_data\n";
     
     untie %sessions;
     

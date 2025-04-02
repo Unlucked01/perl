@@ -18,7 +18,7 @@ my ($user_email, $user_name, $user_role) = check_session($session_cookie);
 
 if (!$user_email) {
     # Not logged in, redirect to login page
-    print $cgi->redirect('/cgi-bin/login.pl');
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
     exit;
 }
 
@@ -234,8 +234,14 @@ HTML
                     
                     <div class="mb-3">
                         <label for="authors" class="form-label">Авторы</label>
-                        <input type="text" class="form-control" id="authors" name="authors" placeholder="Фамилия И.О., Фамилия И.О., ..." required>
+                        <input type="text" class="form-control" id="authors" name="authors" placeholder="Фамилия И.О., Фамилия И.О., ..." value="$user_name" required>
                         <small class="form-text text-muted">Укажите всех авторов через запятую</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="contact_email" class="form-label">Email для связи</label>
+                        <input type="email" class="form-control" id="contact_email" name="contact_email" value="$user_email" readonly>
+                        <small class="form-text text-muted">Этот email будет использоваться для связи с вами</small>
                     </div>
                     
                     <div class="mb-3">

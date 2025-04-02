@@ -6,7 +6,6 @@ use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
 
 my $cgi = CGI->new;
-print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Define paths
 my $db_path = "/usr/local/apache2/data/users.db";
@@ -19,24 +18,8 @@ my $session_cookie = $cgi->cookie('session') || '';
 my ($user_email, $user_name, $user_role) = check_session($session_cookie);
 
 if (!$user_email) {
-    # Not logged in, use HTML/JS redirect instead of CGI redirect
-    print $cgi->header();
-    print <<HTML;
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Перенаправление...</title>
-    <meta http-equiv="refresh" content="0;url=/cgi-bin/login.pl">
-    <script>
-        window.location.href = "/cgi-bin/login.pl";
-    </script>
-</head>
-<body>
-    <p>Если вы не были автоматически перенаправлены, <a href="/cgi-bin/login.pl">нажмите здесь</a>.</p>
-</body>
-</html>
-HTML
+    # Not logged in, use HTTP redirect
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
     exit;
 }
 
@@ -49,6 +32,8 @@ if ($action eq 'update_profile') {
     change_password();
 } elsif ($action eq 'logout') {
     logout();
+} elsif ($action eq 'delete_order') {
+    delete_order();
 } else {
     display_profile();
 }
@@ -73,7 +58,7 @@ sub check_session {
                 my %users;
                 if (tie %users, 'DB_File', $db_path, O_RDONLY, 0644, $DB_HASH) {
                     if (exists $users{$email}) {
-                        my ($password, $name, $first_name, $last_name, $stored_role) = split(':::', $users{$email});
+                        my ($password, $name, $role) = split(':::', $users{$email});
                         untie %users;
                         untie %sessions;
                         return ($email, $name, $role);
@@ -97,16 +82,28 @@ sub get_user_orders {
     if (-e $orders_path) {
         my %orders_db;
         if (tie %orders_db, 'DB_File', $orders_path, O_RDONLY, 0644, $DB_HASH) {
+            # Debug: Write all orders to a log file
+            open my $debug_log, '>>', '/tmp/profile_debug.log';
+            print $debug_log "Looking for orders for user: $email\n";
+            print $debug_log "All orders in database:\n";
+            
             # Query orders by user email from database
             foreach my $order_id (keys %orders_db) {
-                my ($user_email, $date, $amount, $status) = split(':::', $orders_db{$order_id});
+                print $debug_log "Order ID: $order_id, Data: " . $orders_db{$order_id} . "\n";
                 
-                # Only add orders for the current user
-                if ($user_email eq $email) {
+                my ($order_email, $date, $amount, $status) = split(':::', $orders_db{$order_id});
+                print $debug_log "  Parsed: email=$order_email, date=$date, amount=$amount, status=$status\n";
+                
+                # Check for email match (also consider admin can see all orders)
+                if ($order_email eq $email || ($user_role eq 'admin')) {
                     push @orders, [$order_id, $date, $amount, $status];
+                    print $debug_log "  MATCHED - adding to results (email match or admin access)\n";
+                } else {
+                    print $debug_log "  Did NOT match user email\n";
                 }
             }
             
+            close $debug_log;
             untie %orders_db;
         }
     }
@@ -149,6 +146,9 @@ sub display_profile {
     
     # Get user articles
     my @articles = get_user_articles($user_email);
+    
+    # Print header here inside the display function
+    print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
     print <<HTML;
 <!DOCTYPE html>
@@ -312,6 +312,12 @@ HTML
                                                 <td><span class="badge bg-success">$status</span></td>
                                                 <td>
                                                     <a href="/cgi-bin/order.pl?id=$order_id" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                                                    <a href="/cgi-bin/profile.pl?action=delete_order&id=$order_id" class="btn btn-sm btn-outline-danger ms-1" 
+                                                        onclick="return confirm('Вы уверены, что хотите удалить этот заказ?')">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                                        </svg>
+                                                    </a>
                                                 </td>
                                             </tr>
 HTML
@@ -571,22 +577,53 @@ sub logout {
         -path => '/'
     );
     
-    # Use HTML/JS redirect instead of CGI redirect
-    print $cgi->header(-cookie => $cookie);
-    print <<HTML;
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Выход...</title>
-    <meta http-equiv="refresh" content="0;url=/index.html">
-    <script>
-        window.location.href = "/index.html";
-    </script>
-</head>
-<body>
-    <p>Если вы не были автоматически перенаправлены, <a href="/index.html">нажмите здесь</a>.</p>
-</body>
-</html>
-HTML
+    # Use HTTP redirect
+    print $cgi->redirect(-uri => '/index.html', -cookie => $cookie);
+}
+
+# Function to delete an order
+sub delete_order {
+    my $order_id = $cgi->param('id') || '';
+    
+    # Debug log for deletion
+    open my $log, '>>', '/tmp/profile_debug.log';
+    print $log "Attempting to delete order ID: $order_id\n";
+    
+    # Validate user permission
+    if (!$order_id) {
+        print $log "No order ID provided\n";
+        close $log;
+        display_profile();
+        return;
+    }
+    
+    # Only admins or the order owner can delete
+    my %orders;
+    my $can_delete = 0;
+    
+    if (tie %orders, 'DB_File', $orders_path, O_RDWR, 0644, $DB_HASH) {
+        if (exists $orders{$order_id}) {
+            my ($order_email, $date, $amount, $status) = split(':::', $orders{$order_id});
+            
+            # Check if current user is owner or admin
+            if ($user_role eq 'admin' || $order_email eq $user_email) {
+                # Delete the order
+                delete $orders{$order_id};
+                print $log "Order deleted successfully\n";
+                $can_delete = 1;
+            } else {
+                print $log "Permission denied: User $user_email cannot delete order for $order_email\n";
+            }
+        } else {
+            print $log "Order not found\n";
+        }
+        untie %orders;
+    } else {
+        print $log "Failed to open orders database\n";
+    }
+    
+    close $log;
+    
+    # Redirect back to profile page
+    print $cgi->redirect(-uri => '/cgi-bin/profile.pl');
 } 

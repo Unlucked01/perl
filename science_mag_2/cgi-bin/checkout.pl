@@ -4,27 +4,88 @@ use warnings;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use DB_File;
+use Time::HiRes qw(gettimeofday);
+
 
 my $cgi = CGI->new;
-print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Define paths
 my $db_path = "/usr/local/apache2/data/users.db";
 my $sessions_path = "/usr/local/apache2/data/sessions.db";
+my $issues_path = "/usr/local/apache2/data/issues.db";
 my $orders_path = "/usr/local/apache2/data/orders.db";
 
 # Check if user is logged in
 my $session_cookie = $cgi->cookie('session') || '';
 my ($user_email, $user_name, $user_role) = check_session($session_cookie);
 
-# Handle actions
-my $action = $cgi->param('action') || '';
-
-if ($action eq 'process_order') {
-    process_order();
-} else {
-    display_checkout_form();
+# Redirect to login if not logged in
+if (!$user_email) {
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
+    exit;
 }
+
+# Process checkout form
+if ($cgi->param('submit')) {
+    my $name = $cgi->param('name') || '';
+    my $email = $cgi->param('email') || '';
+    my $phone = $cgi->param('phone') || '';
+    my $payment_method = $cgi->param('payment_method') || '';
+    my $cart_json = $cgi->param('cart') || '[]';
+    my $order_total = $cgi->param('total') || 0;
+    
+    # Debug log
+    open my $log, '>>', '/tmp/checkout_debug.log';
+    print $log "Received data: name=$name, email=$email, cart=$cart_json, total=$order_total\n";
+    print $log "Session user email: $user_email\n";
+    close $log;
+    
+    # If email is empty, use the email from session
+    if (!$email && $user_email) {
+        $email = $user_email;
+    }
+    
+    # Simple validation
+    if ($name && $email && $phone && $payment_method && $cart_json ne '[]' && $order_total > 0) {
+        # Generate order ID
+        my $order_id = generate_order_id();
+        
+        # Store order in the database
+        my %orders;
+        if (tie %orders, 'DB_File', $orders_path, O_CREAT|O_RDWR, 0644, $DB_HASH) {
+            # Order format: email:::date:::amount:::status (to match init_db.pl format)
+            my $order_status = 'Оплачен';
+            
+            # Format date as DD.MM.YYYY instead of timestamp
+            my ($sec, $min, $hour, $day, $month, $year) = localtime(time());
+            $year += 1900;
+            $month += 1; # Convert 0-11 to 1-12
+            my $formatted_date = sprintf("%02d.%02d.%04d", $day, $month, $year);
+            
+            # Pre-process the email to ensure it's a valid string
+            my $clean_email = $email;
+            $clean_email =~ s/^\s+|\s+$//g;  # Trim whitespace
+            
+            # Construct the order data string with explicit local variables
+            my $order_data = $clean_email . ":::" . $formatted_date . ":::" . $order_total . ":::" . $order_status;
+            
+            $orders{$order_id} = $order_data;
+            untie %orders;
+            
+            # Redirect to success page
+            print $cgi->redirect(-uri => "/cgi-bin/profile.pl?action=order_success&id=$order_id");
+            exit;
+        }
+    } else {
+        # Debug log for validation failure
+        open my $log, '>>', '/tmp/checkout_debug.log';
+        print $log "Validation failed: name=$name, email=$email, phone=$phone, payment=$payment_method, cart=$cart_json, total=$order_total\n";
+        close $log;
+    }
+}
+
+print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
+print_checkout_form();
 
 # Function to check session
 sub check_session {
@@ -58,37 +119,15 @@ sub check_session {
     return ('', '', '');
 }
 
+# Function to generate order ID
+sub generate_order_id {
+    my ($seconds, $microseconds) = gettimeofday();
+    my $random = int(rand(1000));
+    return sprintf("ORD-%d%03d", $seconds % 1000000, $random);
+}
+
 # Function to display checkout form
-sub display_checkout_form {
-    # Redirect to login if not logged in
-    if (!$user_email) {
-        print <<HTML;
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="3; url=/cgi-bin/login.pl">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оформление заказа | Научный журнал</title>
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6">
-                <div class="alert alert-warning">
-                    <h4 class="alert-heading">Требуется авторизация</h4>
-                    <p>Для оформления заказа необходимо войти в систему. Перенаправление на страницу входа...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-HTML
-        return;
-    }
-    
+sub print_checkout_form {
     print <<HTML;
 <!DOCTYPE html>
 <html lang="ru">
@@ -104,21 +143,33 @@ HTML
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
-                <a class="navbar-brand" href="/index.html">Научный журнал</a>
+                <a class="navbar-brand" href="/cgi-bin/index.pl">Научный журнал</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="/index.html">Главная</a>
+                            <a class="nav-link" href="/cgi-bin/index.pl">Главная</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/issues.html">Выпуски</a>
+                            <a class="nav-link" href="/cgi-bin/issues.pl">Выпуски</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/about.html">О журнале</a>
                         </li>
+HTML
+
+    # Show admin link if user is admin or editor
+    if ($user_role eq 'admin' || $user_role eq 'editor') {
+        print <<HTML;
+                        <li class="nav-item">
+                            <a class="nav-link" href="/cgi-bin/admin.pl">Админ-панель</a>
+                        </li>
+HTML
+    }
+
+    print <<HTML;
                     </ul>
                     <div class="d-flex">
                         <a href="/cart.html" class="btn btn-outline-light me-2">
@@ -126,6 +177,7 @@ HTML
                         </a>
 HTML
 
+    # Display user profile dropdown if logged in
     if ($user_email) {
         print <<HTML;
                         <div class="dropdown">
@@ -139,10 +191,6 @@ HTML
                             </ul>
                         </div>
 HTML
-    } else {
-        print <<HTML;
-                        <a href="/cgi-bin/login.pl" class="btn btn-outline-light">Войти</a>
-HTML
     }
 
     print <<HTML;
@@ -153,35 +201,22 @@ HTML
     </header>
 
     <main class="container my-4">
-        <nav aria-label="breadcrumb" class="mb-4">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/index.html">Главная</a></li>
-                <li class="breadcrumb-item"><a href="/cart.html">Корзина</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Оформление заказа</li>
-            </ol>
-        </nav>
-        
         <h1 class="mb-4">Оформление заказа</h1>
         
         <div class="row">
-            <div class="col-lg-7">
+            <div class="col-md-8">
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Контактная информация</h5>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Данные для оформления</h5>
                     </div>
                     <div class="card-body">
-                        <form id="checkoutForm" method="post" action="/cgi-bin/checkout.pl">
-                            <input type="hidden" name="action" value="process_order">
+                        <form action="/cgi-bin/checkout.pl" method="post" id="checkoutForm">
+                            <input type="hidden" name="cart" id="cartItemsInput">
+                            <input type="hidden" name="total" id="totalInput">
                             
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="firstName" class="form-label">Имя</label>
-                                    <input type="text" class="form-control" id="firstName" name="first_name" value="$user_name" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="lastName" class="form-label">Фамилия</label>
-                                    <input type="text" class="form-control" id="lastName" name="last_name" required>
-                                </div>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">ФИО</label>
+                                <input type="text" class="form-control" id="name" name="name" value="$user_name" required>
                             </div>
                             
                             <div class="mb-3">
@@ -191,122 +226,59 @@ HTML
                             
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Телефон</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX" required>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
                             </div>
                             
-                            <hr class="my-4">
-                            
-                            <h5>Способ оплаты</h5>
-                            <div class="my-3">
+                            <div class="mb-3">
+                                <label class="form-label">Способ оплаты</label>
                                 <div class="form-check">
-                                    <input id="credit" name="payment_method" type="radio" class="form-check-input" value="credit_card" checked required>
-                                    <label class="form-check-label" for="credit">Банковская карта</label>
-                                </div>
-                                <div class="form-check">
-                                    <input id="electronic" name="payment_method" type="radio" class="form-check-input" value="electronic">
-                                    <label class="form-check-label" for="electronic">Электронный платеж</label>
+                                    <input class="form-check-input" type="radio" name="payment_method" id="card" value="card" checked>
+                                    <label class="form-check-label" for="card">
+                                        Банковская карта
+                                    </label>
                                 </div>
                                 <div class="form-check">
-                                    <input id="invoice" name="payment_method" type="radio" class="form-check-input" value="invoice">
-                                    <label class="form-check-label" for="invoice">Счет на организацию</label>
+                                    <input class="form-check-input" type="radio" name="payment_method" id="invoice" value="invoice">
+                                    <label class="form-check-label" for="invoice">
+                                        Счет для юридических лиц
+                                    </label>
                                 </div>
                             </div>
                             
-                            <div id="creditCardFields">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="cardName" class="form-label">Имя на карте</label>
-                                        <input type="text" class="form-control" id="cardName" name="card_name">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="cardNumber" class="form-label">Номер карты</label>
-                                        <input type="text" class="form-control" id="cardNumber" name="card_number" placeholder="XXXX XXXX XXXX XXXX">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="expiration" class="form-label">Срок действия</label>
-                                        <input type="text" class="form-control" id="expiration" name="expiration" placeholder="MM/ГГ">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="cvv" class="form-label">CVV</label>
-                                        <input type="text" class="form-control" id="cvv" name="cvv" placeholder="XXX">
-                                    </div>
-                                </div>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" name="submit" value="1" class="btn btn-primary" id="orderButton">
+                                    Оформить заказ
+                                </button>
                             </div>
-                            
-                            <div id="invoiceFields" style="display: none;">
-                                <div class="mb-3">
-                                    <label for="companyName" class="form-label">Название организации</label>
-                                    <input type="text" class="form-control" id="companyName" name="company_name">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="inn" class="form-label">ИНН</label>
-                                    <input type="text" class="form-control" id="inn" name="inn">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="address" class="form-label">Юридический адрес</label>
-                                    <textarea class="form-control" id="address" name="address" rows="3"></textarea>
-                                </div>
-                            </div>
-                            
-                            <hr class="my-4">
-                            
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="termsAgreement" name="terms_agreement" required>
-                                <label class="form-check-label" for="termsAgreement">Я согласен с условиями оплаты и доставки</label>
-                            </div>
-                            
-                            <hr class="my-4">
-                            
-                            <button class="btn btn-primary btn-lg w-100" type="submit">Оформить заказ</button>
                         </form>
                     </div>
                 </div>
             </div>
             
-            <div class="col-lg-5">
+            <div class="col-md-4">
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Ваш заказ</h5>
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Ваш заказ</h5>
                     </div>
                     <div class="card-body">
-                        <div id="orderSummary">
-                            <!-- Order items will be loaded here by JavaScript -->
-                        </div>
-                        
-                        <div class="spinner-border text-primary" role="status" id="loadingOrder">
-                            <span class="visually-hidden">Загрузка...</span>
-                        </div>
-                        
-                        <hr class="my-4">
-                        
-                        <div class="d-flex justify-content-between mb-3">
-                            <span>Товаров в корзине:</span>
-                            <span id="totalItems">0</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-3">
-                            <span>Стоимость:</span>
-                            <span id="subtotal">0 ₽</span>
+                        <div id="cartItemsList">
+                            <!-- Cart items will be loaded here via JavaScript -->
                         </div>
                         <hr>
-                        <div class="d-flex justify-content-between mb-3 fw-bold">
-                            <span>Итого к оплате:</span>
-                            <span id="totalPrice">0 ₽</span>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Итого:</span>
+                            <span id="totalAmount">0 ₽</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Информация</h5>
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">Информация</h5>
                     </div>
                     <div class="card-body">
-                        <p><i class="bi bi-info-circle"></i> После оплаты заказа вы получите доступ к электронным версиям выпусков в личном кабинете.</p>
-                        <p><i class="bi bi-shield-check"></i> Оплата производится через защищенное соединение.</p>
-                        <p><i class="bi bi-question-circle"></i> Если у вас возникли вопросы, свяжитесь с нами:</p>
-                        <p><i class="bi bi-envelope"></i> orders\@science-journal.ru<br>
-                        <i class="bi bi-telephone"></i> +7 (495) 123-45-67</p>
+                        <p class="mb-2"><i class="bi bi-info-circle"></i> После оформления заказа вы получите доступ к загрузке выпусков журнала в личном кабинете.</p>
+                        <p class="mb-0"><i class="bi bi-shield-check"></i> Ваши данные защищены и не будут переданы третьим лицам.</p>
                     </div>
                 </div>
             </div>
@@ -325,261 +297,127 @@ HTML
     </footer>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/main.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show/hide payment fields based on selection
-            const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
-            const creditCardFields = document.getElementById('creditCardFields');
-            const invoiceFields = document.getElementById('invoiceFields');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load cart items from localStorage
+        let cart = [];
+        try {
+            const cartData = localStorage.getItem('cart');
+            console.log('Cart data from localStorage:', cartData);
+            if (cartData) {
+                cart = JSON.parse(cartData);
+            }
+        } catch (e) {
+            console.error('Error parsing cart data:', e);
+            cart = [];
+        }
+        
+        const cartItemsList = document.getElementById('cartItemsList');
+        const cartItemsInput = document.getElementById('cartItemsInput');
+        const totalInput = document.getElementById('totalInput');
+        const totalAmount = document.getElementById('totalAmount');
+        const orderButton = document.getElementById('orderButton');
+        
+        // Display cart items
+        let total = 0;
+        
+        if (!cart || cart.length === 0) {
+            cartItemsList.innerHTML = '<div class="alert alert-info">Ваша корзина пуста</div>' +
+                '<div class="text-center mt-3">' +
+                '<a href="/cgi-bin/issues.pl" class="btn btn-outline-primary">Перейти к выпускам</a>' +
+                '</div>';
+            orderButton.disabled = true;
+        } else {
+            let itemsHtml = '';
             
-            paymentMethods.forEach(method => {
-                method.addEventListener('change', function() {
-                    if (this.value === 'credit_card') {
-                        creditCardFields.style.display = 'block';
-                        invoiceFields.style.display = 'none';
-                    } else if (this.value === 'invoice') {
-                        creditCardFields.style.display = 'none';
-                        invoiceFields.style.display = 'block';
-                    } else {
-                        creditCardFields.style.display = 'none';
-                        invoiceFields.style.display = 'none';
-                    }
+            cart.forEach(function(item, index) {
+                // Ensure item has all required properties
+                if (!item.price) {
+                    console.error("Item missing price:", item);
+                    return;
+                }
+                
+                if (!item.title) {
+                    console.error("Item missing title:", item);
+                    return;
+                }
+                
+                const itemPrice = parseFloat(item.price) || 0;
+                const itemQty = parseInt(item.quantity) || 1;
+                const itemTotal = itemPrice * itemQty;
+                total += itemTotal;
+                
+                itemsHtml += '<div class="mb-3"><div class="d-flex justify-content-between"><div>' +
+                    '<h6 class="mb-0">' + item.title + '</h6>' +
+                    '<small class="text-muted">' + itemQty + ' x ' + itemPrice + ' ₽</small>' +
+                    '</div>' +
+                    '<div class="d-flex align-items-center">' +
+                    '<span class="me-2">' + itemTotal + ' ₽</span>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger remove-item" data-index="' + index + '">' +
+                    '<i class="bi bi-x"></i>' +
+                    '</button>' +
+                    '</div></div></div>';
+            });
+            
+            cartItemsList.innerHTML = itemsHtml;
+            
+            // Add event listeners for remove buttons
+            document.querySelectorAll('.remove-item').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    removeCartItem(index);
                 });
             });
+        }
+        
+        // Function to remove item from cart
+        function removeCartItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('cart', JSON.stringify(cart));
             
-            // Load cart items for order summary
-            const orderSummary = document.getElementById('orderSummary');
-            const loadingOrder = document.getElementById('loadingOrder');
-            const totalItemsEl = document.getElementById('totalItems');
-            const subtotalEl = document.getElementById('subtotal');
-            const totalPriceEl = document.getElementById('totalPrice');
-            
-            function loadCart() {
-                const cart = JSON.parse(localStorage.getItem('cart')) || [];
-                
-                if (cart.length === 0) {
-                    orderSummary.innerHTML = '<div class="alert alert-warning">Ваша корзина пуста.</div>';
-                } else {
-                    let html = '<ul class="list-group list-group-flush">';
-                    let totalItems = 0;
-                    let subtotal = 0;
-                    
-                    cart.forEach(function(item) {
-                        var itemTotal = item.price * item.quantity;
-                        subtotal += itemTotal;
-                        totalItems += item.quantity;
-                        
-                        html += '<li class="list-group-item px-0">' +
-                            '<div class="row align-items-center">' +
-                            '<div class="col-2">' +
-                            '<img src="' + item.image + '" class="img-fluid rounded" alt="' + item.title + '">' +
-                            '</div>' +
-                            '<div class="col-7">' +
-                            '<h6 class="mb-0">' + item.title + '</h6>' +
-                            '<small class="text-muted">Количество: ' + item.quantity + '</small>' +
-                            '</div>' +
-                            '<div class="col-3 text-end">' +
-                            '<span class="fw-bold">' + itemTotal + ' ₽</span>' +
-                            '</div>' +
-                            '</div>' +
-                            '</li>';
-                    });
-                    
-                    html += '</ul>';
-                    orderSummary.innerHTML = html;
-                    
-                    totalItemsEl.textContent = totalItems;
-                    subtotalEl.textContent = subtotal + ' ₽';
-                    totalPriceEl.textContent = subtotal + ' ₽';
-                }
-                
-                loadingOrder.style.display = 'none';
+            // Reload page to refresh cart display
+            window.location.reload();
+        }
+        
+        // Update total
+        totalAmount.textContent = total + ' ₽';
+        totalInput.value = total;
+        
+        // Set cart items to hidden input
+        cartItemsInput.value = JSON.stringify(cart);
+        
+        // Add form submission handler
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            // Make sure cart has items and total is positive
+            if (!cart || cart.length === 0 || total <= 0) {
+                e.preventDefault();
+                alert('Ваша корзина пуста. Пожалуйста, добавьте товары в корзину.');
+                return false;
             }
             
-            // Load cart on page load
-            loadCart();
+            // Make sure form inputs are valid
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
             
-            // Form validation
-            const checkoutForm = document.getElementById('checkoutForm');
-            
-            checkoutForm.addEventListener('submit', function(e) {
+            if (!name || !email || !phone) {
                 e.preventDefault();
-                
-                // Simple validation
-                let valid = true;
-                
-                // Check if cart is empty
-                const cart = JSON.parse(localStorage.getItem('cart')) || [];
-                if (cart.length === 0) {
-                    alert('Ваша корзина пуста. Добавьте товары в корзину, прежде чем оформить заказ.');
-                    valid = false;
-                }
-                
-                if (valid) {
-                    // Format cart data as title|price|quantity,title|price|quantity,...
-                    const cartData = cart.map(item => 
-                        item.title + '|' + item.price + '|' + item.quantity
-                    ).join(',');
-                    
-                    // Add cart data to form
-                    const cartDataInput = document.createElement('input');
-                    cartDataInput.type = 'hidden';
-                    cartDataInput.name = 'cart_data';
-                    cartDataInput.value = cartData;
-                    this.appendChild(cartDataInput);
-                    
-                    // Submit form
-                    this.submit();
-                }
-            });
+                alert('Пожалуйста, заполните все обязательные поля.');
+                return false;
+            }
+            
+            // Ensure cart data is set correctly
+            cartItemsInput.value = JSON.stringify(cart);
+            totalInput.value = total;
+            
+            console.log('Form submission - Cart:', cartItemsInput.value);
+            console.log('Form submission - Total:', totalInput.value);
+            
+            // Clear cart after successful submission
+            localStorage.setItem('cart', '[]');
+            return true;
         });
-    </script>
-</body>
-</html>
-HTML
-}
-
-# Function to process order
-sub process_order {
-    # Get cart data from POST parameters
-    my $cart_data = $cgi->param('cart_data');
-    
-    # Parse cart data manually (simple format: title|price|quantity,title|price|quantity,...)
-    my @items = split(',', $cart_data);
-    my $total_amount = 0;
-    
-    foreach my $item (@items) {
-        my ($title, $price, $quantity) = split('\|', $item);
-        $total_amount += $price * $quantity;
-    }
-    
-    # Generate order ID
-    my $order_id = "ORD-" . sprintf("%03d", int(rand(1000)));
-    
-    # Store order in database
-    my %orders;
-    if (tie %orders, 'DB_File', $orders_path, O_CREAT|O_RDWR, 0644, $DB_HASH) {
-        my $order_data = join(":::", 
-            $user_email,
-            scalar(localtime()),
-            $total_amount,
-            "Оплачен"
-        );
-        $orders{$order_id} = $order_data;
-        untie %orders;
-    }
-    
-    print <<HTML;
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заказ оформлен | Научный журнал</title>
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/css/bootstrap-icons.css" rel="stylesheet">
-    <link href="/css/styles.css" rel="stylesheet">
-</head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container">
-                <a class="navbar-brand" href="/index.html">Научный журнал</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/index.html">Главная</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/issues.html">Выпуски</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/about.html">О журнале</a>
-                        </li>
-                    </ul>
-                    <div class="d-flex">
-                        <a href="/cart.html" class="btn btn-outline-light me-2">
-                            <i class="bi bi-cart"></i> Корзина
-                        </a>
-HTML
-
-    if ($user_email) {
-        print <<HTML;
-                        <div class="dropdown">
-                            <button class="btn btn-light dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                $user_name
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" href="/cgi-bin/profile.pl">Личный кабинет</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/cgi-bin/profile.pl?action=logout">Выйти</a></li>
-                            </ul>
-                        </div>
-HTML
-    } else {
-        print <<HTML;
-                        <a href="/cgi-bin/login.pl" class="btn btn-outline-light">Войти</a>
-HTML
-    }
-
-    print <<HTML;
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
-
-    <main class="container my-4">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card text-center">
-                    <div class="card-body py-5">
-                        <div class="mb-4">
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
-                        </div>
-                        <h1 class="card-title mb-4">Заказ успешно оформлен!</h1>
-                        <p class="card-text lead">Благодарим вас за покупку. Номер вашего заказа: <strong>ORD-003</strong></p>
-                        <p class="card-text">Вы получите подтверждение заказа на указанный email. Доступ к электронным версиям выпусков будет открыт в вашем личном кабинете.</p>
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
-                            <a href="/cgi-bin/profile.pl" class="btn btn-primary">
-                                <i class="bi bi-person"></i> Перейти в личный кабинет
-                            </a>
-                            <a href="/index.html" class="btn btn-outline-secondary">
-                                <i class="bi bi-house"></i> Вернуться на главную
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer class="bg-dark text-white py-4 mt-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Научный журнал</h5>
-                    <p>© 2025 Все права защищены</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/main.js"></script>
-    <script>
-        // Clear the cart after successful order
-        localStorage.setItem('cart', JSON.stringify([]));
-        
-        // Update cart counter
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCartCounter();
-        });
+    });
     </script>
 </body>
 </html>

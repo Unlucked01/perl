@@ -22,30 +22,7 @@ my $order_id = $cgi->param('id') || '';
 
 # Redirect to login if not logged in
 if (!$user_email) {
-    print <<HTML;
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="3; url=/cgi-bin/login.pl">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Детали заказа | Научный журнал</title>
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6">
-                <div class="alert alert-warning">
-                    <h4 class="alert-heading">Требуется авторизация</h4>
-                    <p>Для просмотра деталей заказа необходимо войти в систему. Перенаправление на страницу входа...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-HTML
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
     exit;
 }
 
@@ -159,8 +136,8 @@ HTML
 # Parse order data
 my ($order_email, $order_date, $order_amount, $order_status) = split(':::', $order_data);
 
-# Check if order belongs to current user
-if ($order_email ne $user_email) {
+# Check if order belongs to current user or if user is admin
+if ($order_email ne $user_email && $user_role ne 'admin') {
     print <<HTML;
 <!DOCTYPE html>
 <html lang="ru">
@@ -319,28 +296,50 @@ print <<HTML;
 
         <div class="row">
             <div class="col-md-8">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Информация о заказе</h5>
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Детали заказа</h5>
+                        <span class="badge bg-primary">$order_status</span>
+HTML
+
+# Add admin badge if applicable
+if ($user_role eq 'admin') {
+    print '<span class="badge bg-danger ms-2">Администратор</span>';
+}
+
+print <<HTML;
                     </div>
                     <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-sm-3 text-muted">Номер заказа:</div>
-                            <div class="col-sm-9">$order_id</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3 text-muted">Дата заказа:</div>
-                            <div class="col-sm-9">$order_date</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3 text-muted">Статус:</div>
-                            <div class="col-sm-9">
-                                <span class="badge bg-success">$order_status</span>
+                        <div class="mb-3">
+                            <h6>Информация о заказе</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Номер заказа:</strong> $order_id</p>
+                                    <p><strong>Дата оформления:</strong> $order_date</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Сумма заказа:</strong> $order_amount ₽</p>
+                                    <p><strong>Статус:</strong> $order_status</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3 text-muted">Сумма заказа:</div>
-                            <div class="col-sm-9">$order_amount ₽</div>
+                        
+                        <!-- Admin-specific information -->
+HTML
+
+# Show admin message if user is an admin and not the order owner
+if ($user_role eq 'admin' && $order_email ne $user_email) {
+    print <<HTML;
+                        <div class="alert alert-info">
+                            <strong>Администратор:</strong> Вы просматриваете заказ пользователя $order_email
+                        </div>
+HTML
+}
+
+print <<HTML;
+                        <div class="mb-3">
+                            <h6>Контактная информация</h6>
+                            <p><strong>Email:</strong> $order_email</p>
                         </div>
                     </div>
                 </div>
@@ -459,3 +458,38 @@ sub check_session {
     
     return ('', '', '');
 } 
+
+sub check_session {
+    my $session_id = shift;
+    
+    if (!$session_id) {
+        return ('', '', '');
+    }
+    
+    # Get session data from database
+    my %sessions;
+    if (tie %sessions, 'DB_File', $sessions_path, O_RDONLY, 0644, $DB_HASH) {
+        if (exists $sessions{$session_id}) {
+            my ($email, $role, $expiry) = split(':::', $sessions{$session_id});
+            
+            # Check if session is expired
+            if ($expiry > time()) {
+                # Get user data from users database
+                my %users;
+                if (tie %users, 'DB_File', $db_path, O_RDONLY, 0644, $DB_HASH) {
+                    if (exists $users{$email}) {
+                        my ($password, $name, $role) = split(':::', $users{$email});
+                        untie %users;
+                        untie %sessions;
+                        return ($email, $name, $role);
+                    }
+                    untie %users;
+                }
+            }
+        }
+        untie %sessions;
+    }
+    
+    return ('', '', '');
+}
+
