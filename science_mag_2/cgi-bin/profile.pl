@@ -120,13 +120,9 @@ sub get_user_articles {
     if (-e $articles_path) {
         my %articles_db;
         if (tie %articles_db, 'DB_File', $articles_path, O_RDONLY, 0644, $DB_HASH) {
-            # For now, we'll just associate articles with users based on a simple match in the authors field
-            # In a real system, there would be a proper relation table for this
             foreach my $article_id (keys %articles_db) {
                 my ($title, $authors, $date, $status, $abstract) = split(':::', $articles_db{$article_id});
-                
-                # Simple check - if the user's email is in the authors field
-                # Or if the user's name is in the authors field (simplified approach)
+
                 if ($authors =~ /$user_email/i || $authors =~ /$user_name/i) {
                     push @articles, [$article_id, $title, $authors, $date, $status];
                 }

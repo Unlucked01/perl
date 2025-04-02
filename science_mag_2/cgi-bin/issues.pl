@@ -17,6 +17,11 @@ my $issues_path = "/usr/local/apache2/data/issues.db";
 my $session_cookie = $cgi->cookie('session') || '';
 my ($user_email, $user_name, $user_role) = check_session($session_cookie);
 
+if (!$user_email) {
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
+    exit;
+}
+
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Display issues page
@@ -215,7 +220,37 @@ HTML
         
         // Show notification
         alert('Выпуск добавлен в корзину');
+        
+        updateCartCounter();
     }
+    
+    function updateCartCounter() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+        
+        const cartBtn = document.querySelector('a[href="/cgi-bin/checkout.pl"]');
+        if (cartBtn) {
+            let badge = cartBtn.querySelector('.badge');
+            if (!badge && count > 0) {
+                badge = document.createElement('span');
+                badge.className = 'badge bg-danger ms-2';
+                cartBtn.appendChild(badge);
+            }
+            
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCounter();
+    });
     </script>
 </body>
 </html>

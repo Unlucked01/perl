@@ -18,6 +18,12 @@ my $sessions_path = "$data_dir/sessions.db";
 my $session_cookie = $cgi->cookie('session') || '';
 my ($user_email, $user_name, $user_role) = check_session($session_cookie);
 
+if (!$user_email) {
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
+    exit;
+}
+
+
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
 # Print HTML header
@@ -65,7 +71,7 @@ HTML
 print <<HTML;
                     </ul>
                     <div class="d-flex">
-                        <a href="/cgi-bin/cart.html" class="btn btn-outline-light me-2">
+                        <a href="/cart.html" class="btn btn-outline-light me-2">
                             <i class="bi bi-cart"></i> Корзина
                         </a>
 HTML
@@ -167,7 +173,7 @@ if (-e $issues_path) {
                         <p class="card-text">$description</p>
                         <p class="card-text"><strong>Цена:</strong> $price руб.</p>
                         <a href="/cgi-bin/issue.pl?id=$issue_id" class="btn btn-primary">Подробнее</a>
-                        <button class="btn btn-outline-primary" onclick="addToCart('$issue_id')">В корзину</button>
+                        <button class="btn btn-outline-primary" onclick="addToCart('$issue_id', '$title', $price)">В корзину</button>
                     </div>
                 </div>
             </div>
@@ -209,39 +215,17 @@ print <<HTML;
 
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script>
-    function addToCart(issueId) {
-        // Check if user is logged in
-        const isLoggedIn = Boolean("$user_email");
-        
-        if (!isLoggedIn) {
-            alert('Для добавления в корзину необходимо войти в систему');
-            window.location.href = '/cgi-bin/login.pl';
-            return;
-        }
-        
-        // Find the item details from the card that was clicked
-        const cardElement = event.target.closest('.card');
-        if (!cardElement) {
-            alert('Ошибка при добавлении в корзину');
-            return;
-        }
-        
-        // Extract information from the card
-        const title = cardElement.querySelector('.card-title').textContent;
-        const priceText = cardElement.querySelector('.card-text strong').nextSibling.textContent;
-        const price = parseInt(priceText.match(/\d+/)[0]); // Extract number from "500 руб."
-        
-        // Get existing cart
+    function addToCart(issueId, title, price) {
+        // Get existing cart from localStorage or create new one
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         
         // Check if item already exists in cart
-        const existingItemIndex = cart.findIndex(item => item.id === issueId);
+        let existingItem = cart.find(item => item.id === issueId);
         
-        if (existingItemIndex >= 0) {
-            // Update quantity if item exists
-            cart[existingItemIndex].quantity += 1;
+        if (existingItem) {
+            existingItem.quantity += 1;
         } else {
-            // Add new item to cart
+            // Add item to cart
             cart.push({
                 id: issueId,
                 title: title,
@@ -251,25 +235,21 @@ print <<HTML;
             });
         }
         
-        // Save cart
+        // Save updated cart
         localStorage.setItem('cart', JSON.stringify(cart));
         
-        // Show confirmation
+        // Show notification
         alert('Выпуск добавлен в корзину');
         
-        // Update cart counter if exists
         updateCartCounter();
     }
     
-    // Update cart count in the header
     function updateCartCounter() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const count = cart.reduce((total, item) => total + (item.quantity || 1), 0);
         
-        // Find the cart button
-        const cartBtn = document.querySelector('a[href="/cgi-bin/cart.html"]');
+        const cartBtn = document.querySelector('a[href="/cart.html"]');
         if (cartBtn) {
-            // Get or create badge
             let badge = cartBtn.querySelector('.badge');
             if (!badge && count > 0) {
                 badge = document.createElement('span');
@@ -288,7 +268,6 @@ print <<HTML;
         }
     }
     
-    // Initialize cart counter on load
     document.addEventListener('DOMContentLoaded', function() {
         updateCartCounter();
     });

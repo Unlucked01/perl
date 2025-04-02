@@ -12,12 +12,14 @@ my $db_path = "/usr/local/apache2/data/users.db";
 my $sessions_path = "/usr/local/apache2/data/sessions.db";
 my $issues_path = "/usr/local/apache2/data/issues.db";
 
-# Get issue ID from URL parameter
 my $issue_id = $cgi->param('id');
-
-# Check if user is logged in
 my $session_cookie = $cgi->cookie('session') || '';
 my ($user_email, $user_name, $user_role) = check_session($session_cookie);
+
+if (!$user_email) {
+    print $cgi->redirect(-uri => '/cgi-bin/login.pl');
+    exit;
+}
 
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
@@ -26,20 +28,17 @@ if (!$issue_id) {
     exit;
 }
 
-# Check if database exists
 unless (-e $issues_path) {
     print_error("База данных выпусков не найдена");
     exit;
 }
 
-# Get issue data
 my %issues;
 if (tie %issues, 'DB_File', $issues_path, O_RDONLY, 0644, $DB_HASH) {
     if (exists $issues{$issue_id}) {
         my ($number, $date, $title, $description, $articles, $price) = split(/:::/, $issues{$issue_id});
         untie %issues;
         
-        # Display issue details
         print_issue_details($issue_id, $number, $date, $title, $description, $articles, $price);
     } else {
         untie %issues;
@@ -49,7 +48,6 @@ if (tie %issues, 'DB_File', $issues_path, O_RDONLY, 0644, $DB_HASH) {
     print_error("Ошибка при открытии базы данных выпусков");
 }
 
-# Function to check session
 sub check_session {
     my $session_id = shift;
     
@@ -62,9 +60,7 @@ sub check_session {
         if (exists $sessions{$session_id}) {
             my ($email, $role, $expiry) = split(':::', $sessions{$session_id});
             
-            # Check if session is expired
             if ($expiry > time()) {
-                # Get user name
                 my %users;
                 if (tie %users, 'DB_File', $db_path, O_RDONLY, 0644, $DB_HASH) {
                     my ($password, $name, $stored_role) = split(':::', $users{$email});
@@ -81,7 +77,6 @@ sub check_session {
     return ('', '', '');
 }
 
-# Function to display issue details
 sub print_issue_details {
     my ($issue_id, $number, $date, $title, $description, $articles, $price) = @_;
 
@@ -117,7 +112,6 @@ sub print_issue_details {
                         </li>
 HTML
 
-    # Show admin link if user is admin or editor
     if ($user_role eq 'admin' || $user_role eq 'editor') {
         print <<HTML;
                         <li class="nav-item">
@@ -134,7 +128,6 @@ HTML
                         </a>
 HTML
 
-    # Display user profile dropdown if logged in, or login button if not
     if ($user_email) {
         print <<HTML;
                         <div class="dropdown">
@@ -182,7 +175,6 @@ HTML
                         <ul class="list-group list-group-flush">
 HTML
 
-    # Display articles
     my @article_ids = split(/,/, $articles);
     foreach my $i (0..$#article_ids) {
         my $article_num = $i + 1;
