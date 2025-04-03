@@ -1,0 +1,68 @@
+@startuml science_mag_db
+
+' IDEF1X style
+skinparam linetype ortho
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+' Entity definitions
+entity "Users" as users {
+  *email : string <<PK>>
+  --
+  password : string
+  name : string
+  role : string
+}
+
+entity "Sessions" as sessions {
+  *session_id : string <<PK>>
+  --
+  email : string <<FK>>
+  role : string
+  expiry : timestamp
+}
+
+entity "Orders" as orders {
+  *order_id : string <<PK>>
+  --
+  user_email : string <<FK>>
+  date : date
+  amount : decimal
+  status : string
+}
+
+entity "Articles" as articles {
+  *article_id : string <<PK>>
+  --
+  title : string
+  authors : string
+  date : date
+  status : string
+  abstract : text
+}
+
+entity "Issues" as issues {
+  *issue_id : string <<PK>>
+  --
+  number : string
+  date : date
+  title : string
+  description : text
+  price : decimal
+}
+
+' Junction table for Issue-Article many-to-many relationship
+entity "IssueArticles" as issue_articles {
+  *issue_id : string <<FK>>
+  *article_id : string <<FK>>
+}
+
+' Relationships
+users ||--o{ sessions
+users ||--o{ orders
+users ||--o{ articles
+issues }o--o{ articles : contains > issue_articles
+
+@enduml
