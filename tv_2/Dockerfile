@@ -49,4 +49,5 @@ WORKDIR /usr/local/apache2/cgi-bin
 RUN chmod +x /usr/local/apache2/cgi-bin/* && \
     chown -R www-data:www-data /usr/local/apache2/htdocs/ && \
     chown -R www-data:www-data /usr/local/apache2/cgi-bin && \
-    chown -R www-data:www-data /usr/local
+    chown -R www-data:www-data /usr/local && \
+    chmod 777 /usr/local/apache2/cgi-bin
